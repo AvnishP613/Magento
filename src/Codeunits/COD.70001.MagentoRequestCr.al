@@ -1,4 +1,4 @@
-codeunit 70001 "Magento Web Request"
+codeunit 70001 "Magento Request Creation"
 {
     var
         XMLDomMgt: Codeunit "XML DOM Mgmt";

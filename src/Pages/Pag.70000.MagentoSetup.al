@@ -82,9 +82,10 @@ page 70000 "Magento Setup"
                 Image = Item;
                 trigger OnAction();
                 var
+                    MagentoWebManagement: Codeunit "Magento Req Mgmt";
 
                 begin
-
+                    MagentoWebManagement.GetItem('','1');
 
                 end;
             }
