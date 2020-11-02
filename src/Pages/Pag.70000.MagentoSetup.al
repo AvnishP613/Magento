@@ -88,66 +88,6 @@ page 70000 "Magento Setup"
 
                 end;
             }
-
-            action(OrderList)
-            {
-                ApplicationArea = All;
-                Promoted = true;
-                PromotedIsBig = true;
-                PromotedOnly = true;
-                PromotedCategory = Category5;
-
-                Image = LogSetup;
-                trigger OnAction()
-                var
-                    MagentoReq: Codeunit "Magento Web Request";
-                    TextValue: Text;
-                begin
-                    TextValue := MagentoReq.SOrderList('dsrrrrrr', '2123');
-                    Message(TextValue);
-
-                end;
-            }
-
-            action(signleorder)
-            {
-                ApplicationArea = All;
-                Promoted = true;
-                PromotedIsBig = true;
-                PromotedOnly = true;
-                PromotedCategory = Category5;
-
-                Image = LogSetup;
-                trigger OnAction()
-                var
-                    MagentoReq: Codeunit "Magento Web Request";
-                    TextValue: Text;
-                begin
-                    TextValue := MagentoReq.SingleOrder('dsrrrrrr', '2123');
-                    Message(TextValue);
-
-                end;
-            }
-
-            action(EndSession)
-            {
-                ApplicationArea = All;
-                Promoted = true;
-                PromotedIsBig = true;
-                PromotedOnly = true;
-                PromotedCategory = Category5;
-
-                Image = LogSetup;
-                trigger OnAction()
-                var
-                    MagentoReq: Codeunit "Magento Web Request";
-                    TextValue: Text;
-                begin
-                    TextValue := MagentoReq.ProductList('', '112dddd', '1');
-                    Message(TextValue);
-
-                end;
-            }
         }
     }
 
