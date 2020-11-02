@@ -48,6 +48,64 @@ codeunit 70001 "Magento Web Request"
 
     end;
 
+    procedure ProductList(Filters: Text; SessionID: Text; StoreView: Text[1]): Text
+    var
+        lXmlDocument: XmlDocument;
+        lEnvolopeXmlNode: XmlNode;
+        lHeaderXmlNode: XmlNode;
+        lBodyXmlNode: XmlNode;
+        lTempXmlNode: XmlNode;
+        lXMLText: Text;
+        ApiNameSpace: Label 'urn:Magento';
+    begin
+        CreateSoapDocument(lXmlDocument, 1, lEnvolopeXmlNode, lHeaderXmlNode, lBodyXmlNode);
+        XMLDomMgt.AddElement(lBodyXmlNode, 'catalogProductList', '', ApiNameSpace, lBodyXmlNode);
+        XMLDomMgt.AddElement(lBodyXmlNode, 'sessionId', SessionID, ApiNameSpace, lTempXmlNode);
+        XMLDomMgt.AddElement(lBodyXmlNode, 'filters', Filters, ApiNameSpace, lTempXmlNode);
+        XMLDomMgt.AddElement(lBodyXmlNode, 'storeView', StoreView, ApiNameSpace, lTempXmlNode);
+        lXmlDocument.WriteTo(lXMLText);
+        exit(lXMLText);
+    end;
+
+
+
+    procedure SOrderList(SessionID: Text; filters: Text): Text
+    var
+        lXmlDocument: XmlDocument;
+        lEnvolopeXmlNode: XmlNode;
+        lHeaderXmlNode: XmlNode;
+        lBodyXmlNode: XmlNode;
+        lTempXmlNode: XmlNode;
+        lXMLText: Text;
+        ApiNameSpace: Label 'urn:Magento';
+    begin
+        CreateSoapDocument(lXmlDocument, 1, lEnvolopeXmlNode, lHeaderXmlNode, lBodyXmlNode);
+        XMLDomMgt.AddElement(lBodyXmlNode, 'salesOrderList', '', ApiNameSpace, lBodyXmlNode);
+        XMLDomMgt.AddElement(lBodyXmlNode, 'sessionId', SessionID, ApiNameSpace, lTempXmlNode);
+        XMLDomMgt.AddElement(lBodyXmlNode, 'filters', filters, ApiNameSpace, lTempXmlNode);
+        lXmlDocument.WriteTo(lXMLText);
+        exit(lXMLText);
+    end;
+
+    procedure SingleOrder(sessionID: Text; OrderID: Text): Text
+    var
+        lXmlDocument: XmlDocument;
+        lEnvolopeXmlNode: XmlNode;
+        lHeaderXmlNode: XmlNode;
+        lBodyXmlNode: XmlNode;
+        lTempXmlNode: XmlNode;
+        lXMLText: Text;
+        ApiNameSpace: Label 'urn:Magento';
+    begin
+        CreateSoapDocument(lXmlDocument, 1, lEnvolopeXmlNode, lHeaderXmlNode, lBodyXmlNode);
+        XMLDomMgt.AddElement(lBodyXmlNode, 'salesOrderInfo', '', ApiNameSpace, lBodyXmlNode);
+        XMLDomMgt.AddElement(lBodyXmlNode, 'sessionId',sessionID, ApiNameSpace, lTempXmlNode);
+        XMLDomMgt.AddElement(lBodyXmlNode, 'orderIncrementId', OrderID, ApiNameSpace, lTempXmlNode);
+        lXmlDocument.WriteTo(lXMLText);
+        exit(lXMLText);
+    end;
+
+
     //Use this function to Create a Soap Document with Soap Version 1.1 & 1.2. This function will return the XML Document along with the reference of the created nodes like Envelope, Header & Body.
     procedure CreateSoapDocument(var pXmlDocument: XmlDocument; pVersion: Option "1.1","1.2"; var pEnvelopeXmlNode: XmlNode; var pHeaderXmlNode: XmlNode; var pBodyXmlNode: XmlNode);
     begin
