@@ -86,13 +86,29 @@ codeunit 70002 "Magento Req Mgmt"
         MSetup: Record "Magento  Setup";
     begin
         MSetup.Get();
-        MSetup.TestField("Item Template");
+        MSetup.TestField("Customer Template");
         IF SendLoginRequest THEN BEGIN
             GetSalesOrders(Filters);
             EndLoginRequest();
         END;
         COMMIT;
     end;
+
+
+
+    procedure GetSOrderOrderDetail(Filters: Text)
+    var
+        MSetup: Record "Magento  Setup";
+    begin
+        MSetup.Get();
+        MSetup.TestField("Customer Template");
+        IF SendLoginRequest THEN BEGIN
+            GetSingleOrder(Filters);
+            EndLoginRequest();
+        END;
+        COMMIT;
+    end;
+
 
 
     procedure SendLoginRequest(): Boolean
@@ -158,7 +174,7 @@ codeunit 70002 "Magento Req Mgmt"
         ReqText := WebReq.SOrderList(SessionInfo."Session ID", filters);
         IF CallWebServices(ReqText, Instream1) THEN BEGIN
             if not ReadError(Instream1) then begin
-                // ReadItemList(Instream1);
+                ReadOrderList(Instream1);
                 exit(true);
             end
             else
@@ -167,11 +183,37 @@ codeunit 70002 "Magento Req Mgmt"
         end
         else begin
             exit(false);
-            InsertWebTxnLog('Item:Receive Web Error', 2, 2, '', '', '', SessionInfo."Session ID", '');
+            InsertWebTxnLog('SalesOrdersList:Receive Web Error', 2, 2, '', '', '', SessionInfo."Session ID", '');
 
         end;
     end;
 
+
+
+    local procedure GetSingleOrder(SOrderNo: Text): Boolean
+    var
+        WebReq: Codeunit "Magento Request Creation";
+        SuccessNodeText: Label 'ns1:loginResponse';
+        ReqText: Text;
+        Instream1: InStream;
+        OInstream: InStream;
+    begin
+        ReqText := WebReq.SingleOrder(SessionID, SOrderNo);
+        IF CallWebServices(ReqText, Instream1) THEN BEGIN
+            if not ReadError(Instream1) then begin
+                ReadSingleOrderList(Instream1);//  ReadOrderList(Instream1);
+                exit(true);
+            end
+            else
+                exit(false)
+
+        end
+        else begin
+            exit(false);
+            InsertWebTxnLog('SalesOrder Single:Receive Web Error', 2, 2, '', '', SOrderNo, SessionInfo."Session ID", '');
+
+        end;
+    end;
 
     procedure EndLoginRequest(): Boolean
     var
@@ -413,8 +455,16 @@ codeunit 70002 "Magento Req Mgmt"
         NewInstream: InStream;
         TotalCount: Integer;
         //  ItemRec: Record item;
-        Customer: Text;
-        MgSetup: Record "Magento  Setup";
+        FirstName: Text;
+        CustomerID: Text;
+
+        WebSOrderRec: Record "Web Sales Order List";
+        WebOrderID: Code[20];
+        CustomerRecord: Record Customer;
+        ShippingMethodText: Text;
+        ShippingMethodRec: Record "Shipment Method";
+        NoSereriesMgmt: Codeunit NoSeriesManagement;
+        SalesSetup: Record "Sales & Receivables Setup";
     begin
         MgSetup.Get();
         NewInstream := Inst2;
@@ -439,28 +489,79 @@ codeunit 70002 "Magento Req Mgmt"
             //   XmlNamaespaceManager.AddNamespace('ns1', 'http://schemas.xmlsoap.org/soap/envelope/');
             //   XmlNamaespaceManager.NameTable(XmlDoc.NameTable);
             TotalCount := 0;
-            if XmlDoc.SelectNodes('/SOAP-ENV:Envelope/SOAP-ENV:Body/ns1:salesOrderListResponse/result/item', XmlNamaespaceManager, XmlNList) then begin
+            if XmlDoc.SelectNodes('/Envelope/Body/salesOrderListResponse/result/item', XmlNamaespaceManager, XmlNList) then begin
                 foreach Node in XmlNList do begin
                     eNode := Node.AsXmlElement();
+                    Clear(WebOrderID);
+                    Clear(FirstName);
+                    WebOrderID := GetText(eNode, 'increment_id');
+                    FirstName := GetText(eNode, 'customer_firstname');
+                    if WebOrderID <> '' then begin
+                        WebSOrderRec.Reset();
+                        WebSOrderRec.SetRange("Web Order ID", WebOrderID);
+                        if not WebSOrderRec.FindFirst() then begin
+                            WebSOrderRec.Reset();
+                            WebSOrderRec.Init();
+                            WebSOrderRec."Web Order ID" := WebOrderID;
+                            WebSOrderRec."Last Name" := GetText(eNode, 'customer_lastname');
+                            WebSOrderRec."First Name" := FirstName;
+                            WebSOrderRec.Order_State := GetText(eNode, 'state');
+                            WebSOrderRec.Order_Status := GetText(eNode, 'status');
+                            WebSOrderRec."Order ID" := GetText(eNode, 'order_id');
+                            WebSOrderRec."Quuote ID" := GetText(eNode, 'quote_id');
+                            WebSOrderRec."Store ID" := GetText(eNode, 'store_id');
+                            WebSOrderRec."Store Name" := GetText(eNode, 'store_name');
+                            WebSOrderRec."Currency Code" := GetText(eNode, 'base_currency_code');
+                            //      order_id
+                            WebSOrderRec."Total Qty" := GetDecimal(eNode, 'total_qty_ordered');
+                            WebSOrderRec."Grand Total" := GetDecimal(eNode, 'grand_total');
+                            WebSOrderRec."Magento Created DateTime" := GetDateTime(eNode, 'created_at');
 
+                            ShippingMethodText := GetText(eNode, 'shipping_method');
+                            if ShippingMethodText <> '' then
+                                WebSOrderRec."Shpping Method" := CopyStr(ShippingMethodText, 1, 10);
+                            WebSOrderRec.Insert(true);
 
+                            if ShippingMethodText <> '' then begin
+                                ShippingMethodText := CopyStr(ShippingMethodText, 1, 10);
+                                ShippingMethodRec.Reset();
+                                ShippingMethodRec.SetRange(Code, ShippingMethodText);
+                                if not ShippingMethodRec.FindFirst() then begin
 
-                    if eNode.SelectNodes('website_ids', XmlNamaespaceManager, XmlNList1) then begin
-                        foreach Node1 in XmlNList1 do begin
-                            eNode1 := Node1.AsXmlElement();
-                        end;
-
-
-                        if eNode.SelectNodes('category_ids', XmlNamaespaceManager, XmlNList2) then begin
-                            foreach Node2 in XmlNList2 do begin
-                                eNode2 := Node2.AsXmlElement();
+                                    ShippingMethodRec.Reset();
+                                    ShippingMethodRec.Init();
+                                    ShippingMethodRec.Code := ShippingMethodText;
+                                    ShippingMethodRec.Description := GetText(eNode, 'shipping_description');
+                                    ShippingMethodRec.Insert(true);
+                                end;
                             end;
-                        end;
+                            if FirstName <> '' then begin
+                                CustomerRecord.Reset();
+                                CustomerRecord.SetRange("First Name", FirstName);
+                                if not CustomerRecord.FindFirst() then begin
+                                    CustomerRecord.Reset();
+                                    CustomerRecord.Init();
+                                    SalesSetup.Get();
+                                    SalesSetup.TestField("Customer Nos.");
+                                    // NoSeriesMgt.InitSeries(SalesSetup."Customer Nos.", xRec."No. Series", 0D, "No.", "No. Series");
+                                    CustomerRecord."No." := NoSereriesMgmt.GetNextNo3(SalesSetup."Customer Nos.", WorkDate(), true, false);
+                                    CustomerRecord."First Name" := FirstName;
+                                    CustomerRecord."Last Name" := GetText(eNode, 'customer_lastname');
+                                    CustomerRecord.Name := FirstName + '' + CustomerRecord."Last Name";
+                                    CustomerRecord.Magento := true;
+                                    CustomerRecord.Insert();
+                                    // UpdateCustomerFromTemplate(CustomerRecord);
+                                    ApplyTemplateCustomer(CustomerRecord, MgSetup."Customer Template");
+                                end;
+                            end;
 
-                        InsertWebTxnLog('Item Created', 2, 1, '', '', '', SessionInfo."Session ID", GetText(eNode, 'product_id'));
-                        TotalCount += 1;
-                    end
+                            InsertWebTxnLog('Web Order Created', 2, 1, '', '', GetText(eNode, 'increment_id'), SessionInfo."Session ID", '');
+                            TotalCount += 1;
+                            Commit();
+                        end;
+                    end;
                 end;
+
 
                 if TotalCount > 0 then
                     exit(true)
@@ -471,6 +572,115 @@ codeunit 70002 "Magento Req Mgmt"
         else
             exit(false)
     end;
+
+
+    local procedure ReadSingleOrderList(Inst2: InStream): Boolean
+    var
+
+        XmlNamaespaceManager: XmlNamespaceManager;
+        XmlDoc: XmlDocument;
+        XmlNList: XmlNodeList;
+        Node: XmlNode;
+        XmlNList2: XmlNodeList;
+        Node2: XmlNode;
+        XmlNList1: XmlNodeList;
+        XmlNList4: XmlNodeList;
+        XmlNList5: XmlNodeList;
+        Node1: XmlNode;
+        XmlNList3: XmlNodeList;
+        Node3: XmlNode;
+        Node4: XmlNode;
+        Node5: XmlNode;
+        eNode: XmlElement;
+        eNode1: XmlElement;
+        eNode2: XmlElement;
+        eNode3: XmlElement;
+        eNode4: XmlElement;
+        eNode5: XmlElement;
+        XmlBuff: Record "XML Buffer";
+        ProdID: Text;
+        Outs: OutStream;
+        TempB: Codeunit "Temp Blob";
+        Instream2: InStream;
+        NewInstream: InStream;
+        TotalCount: Integer;
+        //  ItemRec: Record item;
+        FirstName: Text;
+        CustomerID: Text;
+
+        WebSOrderRec: Record "Web Sales Order List";
+        WebOrderID: Code[20];
+        CustomerRecord: Record Customer;
+        ShippingMethodText: Text;
+        ShippingMethodRec: Record "Shipment Method";
+        NoSereriesMgmt: Codeunit NoSeriesManagement;
+        SalesSetup: Record "Sales & Receivables Setup";
+    begin
+        MgSetup.Get();
+        NewInstream := Inst2;
+        ProdID := RemoveNamespaces(NewInstream);
+
+
+        TempB.CreateOutStream(Outs);
+        Outs.WriteText(ProdID);
+
+
+        TempB.CreateInStream(Instream2);
+
+
+        if Instream2.EOS then
+            Error('Cannot Read Blank Stream');
+
+
+        if XmlDocument.ReadFrom(Instream2, XmlDoc) then begin
+            XmlNamaespaceManager.NameTable(XmlDoc.NameTable);
+            //   XmlNamaespaceManager.AddNamespace('SOAP-ENV', 'http://schemas.xmlsoap.org/soap/envelope/');
+            //   XmlNamaespaceManager.AddNamespace('ns1:loginResponse', 'http://schemas.xmlsoap.org/soap/envelope/');
+            //   XmlNamaespaceManager.AddNamespace('ns1', 'http://schemas.xmlsoap.org/soap/envelope/');
+            //   XmlNamaespaceManager.NameTable(XmlDoc.NameTable);
+            TotalCount := 0;
+            if XmlDoc.SelectNodes('/Envelope/Body/salesOrderInfoResponse/result', XmlNamaespaceManager, XmlNList) then begin
+                foreach Node in XmlNList do begin
+                    eNode := Node.AsXmlElement();
+                    if eNode.SelectNodes('billing_address', XmlNamaespaceManager, XmlNList1) then begin
+                        foreach Node2 in XmlNList1 do begin
+                            eNode2 := Node2.AsXmlElement();
+                        end;
+                    end;
+                    if eNode.SelectNodes('items/item', XmlNamaespaceManager, XmlNList2) then begin
+                        foreach Node3 in XmlNList2 do begin
+                            eNode3 := Node3.AsXmlElement();
+                        end;
+                    end;
+                    if eNode.SelectNodes('payment', XmlNamaespaceManager, XmlNList3) then begin
+                        foreach Node4 in XmlNList3 do begin
+                            eNode4 := Node4.AsXmlElement();
+                        end;
+                    end;
+
+                    if eNode.SelectNodes('status_history', XmlNamaespaceManager, XmlNList4) then begin
+                        foreach Node5 in XmlNList4 do begin
+                            eNode5 := Node5.AsXmlElement();
+                        end;
+                    end;
+
+                    InsertWebTxnLog('Web Order Single Received', 2, 1, '', '', GetText(eNode, 'increment_id'), SessionInfo."Session ID", '');
+                    TotalCount += 1;
+                    Commit();
+                end;
+
+            end;
+            if TotalCount > 0 then
+                exit(true)
+            else
+                exit(false);
+        end
+        else
+            exit(false)
+    end;
+
+
+
 
 
 
@@ -539,7 +749,27 @@ codeunit 70002 "Magento Req Mgmt"
     END;
 
 
+    procedure UpdateCustomerFromTemplate(VAR Customer: Record Customer)
+    var
 
+    begin
+        MgSetup.Get();
+        ConfigTemplateHeader.SETRANGE("Table ID", DATABASE::Customer);
+        ConfigTemplateHeader.SETRANGE(Enabled, TRUE);
+        ConfigTemplateHeader.SetRange(Code, MgSetup."Customer Template");
+        IF ConfigTemplateHeader.FindFirst() then begin
+            //ConfigTemplates.SETTABLEVIEW(ConfigTemplateHeader);
+            //  ConfigTemplates.LOOKUPMODE(TRUE);
+            //  IF ConfigTemplates.RUNMODAL = ACTION::LookupOK THEN BEGIN
+            //    ConfigTemplates.GETRECORD(ConfigTemplateHeader);
+            CustomerRecRef.GETTABLE(Customer);
+            ConfigTemplateManagement.UpdateRecord(ConfigTemplateHeader, CustomerRecRef);
+            DimensionsTemplate.InsertDimensionsFromTemplates(ConfigTemplateHeader, Customer."No.", DATABASE::Customer);
+            CustomerRecRef.SETTABLE(Customer);
+            Customer.FIND;
+        END;
+        //END;
+    END;
 
     procedure InsertWebTxnLog(Description: Text[150]; Direction: Option ,Inbound,Outbound; Status: Option ,Success,Failure; FaultCode: Code[10]; FaultDescription: Text[250]; SalesOrderNo: Code[30]; SessionID1: Text[100]; ItemNo: Code[20])
     var
@@ -597,6 +827,18 @@ codeunit 70002 "Magento Req Mgmt"
     var
         FieldNode: XmlNode;
         value: DateTime;
+    begin
+        foreach FieldNode in e.GetChildElements(Name) do
+            if evaluate(Value, FieldNode.AsXmlElement().InnerText, 9) then
+                exit(value);
+    end;
+
+
+
+    local procedure GetDecimal(e: XmlElement; Name: Text): Decimal
+    var
+        FieldNode: XmlNode;
+        value: Decimal;
     begin
         foreach FieldNode in e.GetChildElements(Name) do
             if evaluate(Value, FieldNode.AsXmlElement().InnerText, 9) then
@@ -809,6 +1051,7 @@ codeunit 70002 "Magento Req Mgmt"
         SessionID: Text;
         SessionInfo: Record "Magento Session Log";
         ConfigTemplateHeader: Record "Config. Template Header";
+        MgSetup: Record "Magento  Setup";
         CustomerRecRef: RecordRef;
         ConfigTemplateManagement: Codeunit "Config. Template Management";
         DimensionsTemplate: Record "Dimensions Template";

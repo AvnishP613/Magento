@@ -40,6 +40,18 @@ page 70003 "Web Order List"
                 {
                     ApplicationArea = All;
                 }
+                field("First Name"; Rec."First Name")
+                {
+                    ApplicationArea = All;
+                }
+                field("Last Name"; Rec."Last Name")
+                {
+                    ApplicationArea = All;
+                }
+                field("Currency Code"; Rec."Currency Code")
+                {
+                    ApplicationArea = All;
+                }
             }
         }
 
@@ -49,15 +61,21 @@ page 70003 "Web Order List"
     {
         area(Processing)
         {
-            action(ActionName)
+            action(GetOrderDetails)
             {
                 ApplicationArea = All;
+                Promoted = true;
+                PromotedCategory = Process;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+                Image = CoupledOrder;
+
 
                 trigger OnAction();
                 var
                     MagentoReq: Codeunit "Magento Req Mgmt";
                 begin
-
+                    MagentoReq.GetSOrderOrderDetail(Format(rec."Web Order ID"));
                 end;
             }
         }

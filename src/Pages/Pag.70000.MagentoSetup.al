@@ -69,6 +69,18 @@ page 70000 "Magento Setup"
                     RunObject = page "Magento Web Transaction";
 
                 }
+
+                action(WebSalesOrderID)
+                {
+                    Caption = 'Web Order List';
+                    ApplicationArea = All;
+                    PromotedOnly = true;
+                    Promoted = true;
+                    Image = GetOrder;
+                    PromotedCategory = Process;
+                    RunObject = page "Web Order List";
+
+                }
             }
             action(GetItems)
             {
@@ -99,16 +111,18 @@ page 70000 "Magento Setup"
                 PromotedOnly = true;
                 PromotedCategory = Category4;
 
-                Image = Item;
+                Image = OrderList;
                 trigger OnAction();
                 var
                     MagentoWebManagement: Codeunit "Magento Req Mgmt";
 
                 begin
-                   // MagentoWebManagement.get
+                    MagentoWebManagement.GetSOrder('');
 
                 end;
             }
+
+
         }
     }
 

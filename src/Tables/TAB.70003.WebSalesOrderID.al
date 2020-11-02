@@ -41,6 +41,56 @@ table 70003 "Web Sales Order List"
             DataClassification = ToBeClassified;
 
         }
+
+        field(8; "First Name"; Text[100])
+        {
+            DataClassification = ToBeClassified;
+
+        }
+
+
+        field(9; "Last Name"; Text[100])
+        {
+            DataClassification = ToBeClassified;
+
+        }
+
+        field(10; "Order ID"; Code[20])
+        {
+            DataClassification = ToBeClassified;
+
+        }
+        field(11; "Quuote ID"; Code[20])
+        {
+            DataClassification = ToBeClassified;
+
+        }
+        field(12; "Currency Code"; Code[4])
+        {
+            DataClassification = ToBeClassified;
+
+        }
+
+        field(13; "Magento Created DateTime"; DateTime)
+        {
+            DataClassification = ToBeClassified;
+
+        }
+        field(14; "User ID"; Code[50])
+        {
+            DataClassification = ToBeClassified;
+        }
+
+        field(15; "Created DateTime"; DateTime)
+        {
+            DataClassification = ToBeClassified;
+        }
+
+        field(16; "Shpping Method"; Code[10])
+        {
+            DataClassification = ToBeClassified;
+        }
+
     }
 
     keys
@@ -56,7 +106,8 @@ table 70003 "Web Sales Order List"
 
     trigger OnInsert()
     begin
-
+        "Created DateTime" := CurrentDateTime;
+        "User ID" := UserId;
     end;
 
     trigger OnModify()
