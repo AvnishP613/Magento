@@ -16,8 +16,8 @@
   "application": "17.0.0.0",
   "idRanges": [
     {
-      "from": 50100,
-      "to": 50149
+      "from": 70000,
+      "to": 80000
     }
   ],
   "contextSensitiveHelpUrl": "https://Magento.com/help/",
