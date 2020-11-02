@@ -80,6 +80,21 @@ codeunit 70002 "Magento Req Mgmt"
         COMMIT;
     end;
 
+
+    procedure GetSOrder(Filters: Text)
+    var
+        MSetup: Record "Magento  Setup";
+    begin
+        MSetup.Get();
+        MSetup.TestField("Item Template");
+        IF SendLoginRequest THEN BEGIN
+            GetSalesOrders(Filters);
+            EndLoginRequest();
+        END;
+        COMMIT;
+    end;
+
+
     procedure SendLoginRequest(): Boolean
     var
         WebReq: Codeunit "Magento Request Creation";
@@ -105,7 +120,7 @@ codeunit 70002 "Magento Req Mgmt"
         end;
     end;
 
-    procedure GetItemDetails(filters: Text; storeview: Text[1]): Boolean
+    local procedure GetItemDetails(filters: Text; storeview: Text[1]): Boolean
     var
         WebReq: Codeunit "Magento Request Creation";
         SuccessNodeText: Label 'ns1:loginResponse';
@@ -129,6 +144,34 @@ codeunit 70002 "Magento Req Mgmt"
 
         end;
     end;
+
+
+
+    local procedure GetSalesOrders(filters: Text): Boolean
+    var
+        WebReq: Codeunit "Magento Request Creation";
+        SuccessNodeText: Label 'ns1:loginResponse';
+        ReqText: Text;
+        Instream1: InStream;
+        OInstream: InStream;
+    begin
+        ReqText := WebReq.SOrderList(SessionInfo."Session ID", filters);
+        IF CallWebServices(ReqText, Instream1) THEN BEGIN
+            if not ReadError(Instream1) then begin
+                // ReadItemList(Instream1);
+                exit(true);
+            end
+            else
+                exit(false)
+
+        end
+        else begin
+            exit(false);
+            InsertWebTxnLog('Item:Receive Web Error', 2, 2, '', '', '', SessionInfo."Session ID", '');
+
+        end;
+    end;
+
 
     procedure EndLoginRequest(): Boolean
     var
@@ -243,7 +286,7 @@ codeunit 70002 "Magento Req Mgmt"
 
     local procedure ReadItemList(Inst2: InStream): Boolean
     var
-        myInt: Integer;
+
         XmlNamaespaceManager: XmlNamespaceManager;
         XmlDoc: XmlDocument;
         XmlNList: XmlNodeList;
@@ -265,7 +308,11 @@ codeunit 70002 "Magento Req Mgmt"
         Instream2: InStream;
         NewInstream: InStream;
         TotalCount: Integer;
+        ItemRec: Record item;
+        itemID: Text;
+        MgSetup: Record "Magento  Setup";
     begin
+        MgSetup.Get();
         NewInstream := Inst2;
         ProdID := RemoveNamespaces(NewInstream);
 
@@ -291,6 +338,113 @@ codeunit 70002 "Magento Req Mgmt"
             if XmlDoc.SelectNodes('/Envelope/Body/catalogProductListResponse/storeView/item', XmlNamaespaceManager, XmlNList) then begin
                 foreach Node in XmlNList do begin
                     eNode := Node.AsXmlElement();
+                    Clear(itemID);
+                    itemID := GetText(eNode, 'product_id');
+
+                    if itemID <> '' then begin
+                        ItemRec.Reset();
+                        ItemRec.SetRange("No.", itemID);
+                        if not ItemRec.FindFirst() then begin
+                            ItemRec.Reset();
+                            ItemRec.Init();
+                            ItemRec."No." := GetText(eNode, 'product_id');
+                            ItemRec.Description := GetText(eNode, 'name');
+                            ItemRec."Magento Type" := GetText(eNode, 'type');
+
+
+                            if eNode.SelectNodes('website_ids', XmlNamaespaceManager, XmlNList1) then begin
+                                foreach Node1 in XmlNList1 do begin
+                                    eNode1 := Node1.AsXmlElement();
+                                    ItemRec."Magento Type" := GetText(eNode, 'item');
+                                end;
+
+
+                                if eNode.SelectNodes('category_ids', XmlNamaespaceManager, XmlNList2) then begin
+                                    foreach Node2 in XmlNList2 do begin
+                                        eNode2 := Node2.AsXmlElement();
+                                        ItemRec."Magento Type" := GetText(eNode, 'item');
+                                    end;
+                                end;
+                                ItemRec.Magento := true;
+                                ItemRec.Insert(true);
+                                ApplyTemplateItem(ItemRec, MgSetup."Item Template");
+
+                                InsertWebTxnLog('Item Created', 2, 1, '', '', '', SessionInfo."Session ID", GetText(eNode, 'product_id'));
+                                TotalCount += 1;
+                            end;
+                        end
+                    end;
+                end;
+
+                if TotalCount > 0 then
+                    exit(true)
+                else
+                    exit(false);
+            end;
+        end
+        else
+            exit(false)
+    end;
+
+
+
+    local procedure ReadOrderList(Inst2: InStream): Boolean
+    var
+
+        XmlNamaespaceManager: XmlNamespaceManager;
+        XmlDoc: XmlDocument;
+        XmlNList: XmlNodeList;
+        Node: XmlNode;
+        XmlNList2: XmlNodeList;
+        Node2: XmlNode;
+        XmlNList1: XmlNodeList;
+        Node1: XmlNode;
+        XmlNList3: XmlNodeList;
+        Node3: XmlNode;
+        eNode: XmlElement;
+        eNode1: XmlElement;
+        eNode2: XmlElement;
+        eNode3: XmlElement;
+        XmlBuff: Record "XML Buffer";
+        ProdID: Text;
+        Outs: OutStream;
+        TempB: Codeunit "Temp Blob";
+        Instream2: InStream;
+        NewInstream: InStream;
+        TotalCount: Integer;
+        //  ItemRec: Record item;
+        Customer: Text;
+        MgSetup: Record "Magento  Setup";
+    begin
+        MgSetup.Get();
+        NewInstream := Inst2;
+        ProdID := RemoveNamespaces(NewInstream);
+
+
+        TempB.CreateOutStream(Outs);
+        Outs.WriteText(ProdID);
+
+
+        TempB.CreateInStream(Instream2);
+
+
+        if Instream2.EOS then
+            Error('Cannot Read Blank Stream');
+
+
+        if XmlDocument.ReadFrom(Instream2, XmlDoc) then begin
+            XmlNamaespaceManager.NameTable(XmlDoc.NameTable);
+            //   XmlNamaespaceManager.AddNamespace('SOAP-ENV', 'http://schemas.xmlsoap.org/soap/envelope/');
+            //   XmlNamaespaceManager.AddNamespace('ns1:loginResponse', 'http://schemas.xmlsoap.org/soap/envelope/');
+            //   XmlNamaespaceManager.AddNamespace('ns1', 'http://schemas.xmlsoap.org/soap/envelope/');
+            //   XmlNamaespaceManager.NameTable(XmlDoc.NameTable);
+            TotalCount := 0;
+            if XmlDoc.SelectNodes('/SOAP-ENV:Envelope/SOAP-ENV:Body/ns1:salesOrderListResponse/result/item', XmlNamaespaceManager, XmlNList) then begin
+                foreach Node in XmlNList do begin
+                    eNode := Node.AsXmlElement();
+
+
+
                     if eNode.SelectNodes('website_ids', XmlNamaespaceManager, XmlNList1) then begin
                         foreach Node1 in XmlNList1 do begin
                             eNode1 := Node1.AsXmlElement();
@@ -302,15 +456,17 @@ codeunit 70002 "Magento Req Mgmt"
                                 eNode2 := Node2.AsXmlElement();
                             end;
                         end;
+
                         InsertWebTxnLog('Item Created', 2, 1, '', '', '', SessionInfo."Session ID", GetText(eNode, 'product_id'));
                         TotalCount += 1;
-                    end;
-                end
+                    end
+                end;
+
+                if TotalCount > 0 then
+                    exit(true)
+                else
+                    exit(false);
             end;
-            if TotalCount > 0 then
-                exit(true)
-            else
-                exit(false);
         end
         else
             exit(false)
@@ -562,53 +718,83 @@ codeunit 70002 "Magento Req Mgmt"
         // exit(Instream2);
     end;
 
-
-
-    procedure UpdateCustomerTemplate(VAR Customer: Record Customer)
+    local procedure ApplyTemplateCustomer(var Customer: Record Customer; TemplCode: Code[20])
     var
-        MagentoSetup: Record "Magento  Setup";
-        CustomerRecRef: RecordRef;
-        temTe: Record "Item Templ.";
+        CustomerTempl: Record "Customer Templ.";
     begin
-        MagentoSetup.Get();
-        MagentoSetup.TestField("Item Template");
-        MagentoSetup.TestField("Customer Template");
+        CustomerTempl.Get(TemplCode);
+        Customer.City := CustomerTempl.City;
+        Customer."Customer Posting Group" := CustomerTempl."Customer Posting Group";
+        Customer."Currency Code" := CustomerTempl."Currency Code";
+        Customer."Language Code" := CustomerTempl."Language Code";
+        Customer."Payment Terms Code" := CustomerTempl."Payment Terms Code";
+        Customer."Fin. Charge Terms Code" := CustomerTempl."Fin. Charge Terms Code";
+        Customer."Invoice Disc. Code" := CustomerTempl."Invoice Disc. Code";
+        Customer."Country/Region Code" := CustomerTempl."Country/Region Code";
+        Customer."Bill-to Customer No." := CustomerTempl."Bill-to Customer No.";
+        Customer."Payment Method Code" := CustomerTempl."Payment Method Code";
+        Customer."Application Method" := CustomerTempl."Application Method".AsInteger();
+        Customer."Prices Including VAT" := CustomerTempl."Prices Including VAT";
+        Customer."Gen. Bus. Posting Group" := CustomerTempl."Gen. Bus. Posting Group";
+        Customer."Post Code" := CustomerTempl."Post Code";
+        Customer.County := CustomerTempl.County;
+        Customer."VAT Bus. Posting Group" := CustomerTempl."VAT Bus. Posting Group";
+        Customer."Block Payment Tolerance" := CustomerTempl."Block Payment Tolerance";
+        Customer."Validate EU Vat Reg. No." := CustomerTempl."Validate EU Vat Reg. No.";
+        Customer.Blocked := CustomerTempl.Blocked;
+        Customer.Modify(true);
+    end;
 
-        ConfigTemplateHeader.SETRANGE("Table ID", DATABASE::Customer);
-        ConfigTemplateHeader.SETRANGE(Enabled, TRUE);
-        ConfigTemplateHeader.SetRange(Code, MagentoSetup."Customer Template");
-        IF ConfigTemplateHeader.FindFirst() then begin
-            CustomerRecRef.GETTABLE(Customer);
-            ConfigTemplateManagement.UpdateRecord(ConfigTemplateHeader, CustomerRecRef);
-            DimensionsTemplate.InsertDimensionsFromTemplates(ConfigTemplateHeader, Customer."No.", DATABASE::Customer);
-            CustomerRecRef.SETTABLE(Customer);
-            Customer.FIND;
-        END;
-    END;
 
-
-
-
-    procedure UpdateItemTemplate(VAR Item: Record Item)
+    local procedure ApplyTemplateItem(var Item: Record Item; TemplCode: Code[20])
     var
-        MagentoSetup: Record "Magento  Setup";
-        ItemRecRef: RecordRef;
+        ItemTempl: Record "Item Templ.";
     begin
-        MagentoSetup.Get();
-        MagentoSetup.TestField("Item Template");
-        MagentoSetup.TestField("Customer Template");
-        ConfigTemplateHeader.SETRANGE("Table ID", DATABASE::Item);
-        ConfigTemplateHeader.SETRANGE(Enabled, TRUE);
-        ConfigTemplateHeader.SetRange(Code, MagentoSetup."Item Template");
-        IF ConfigTemplateHeader.FindFirst() then begin
-            ItemRecRef.GETTABLE(Item);
-            ConfigTemplateManagement.UpdateRecord(ConfigTemplateHeader, ItemRecRef);
-            DimensionsTemplate.InsertDimensionsFromTemplates(ConfigTemplateHeader, Item."No.", DATABASE::Item);
-            ItemRecRef.SETTABLE(Item);
-            Item.FIND;
+        ItemTempl.Get(TemplCode);
+        Item.Type := ItemTempl.Type;
+        Item."Inventory Posting Group" := ItemTempl."Inventory Posting Group";
+        Item."Item Disc. Group" := ItemTempl."Item Disc. Group";
+        Item."Allow Invoice Disc." := ItemTempl."Allow Invoice Disc.";
+        Item."Price/Profit Calculation" := ItemTempl."Price/Profit Calculation";
+        Item."Profit %" := ItemTempl."Profit %";
+        Item."Costing Method" := ItemTempl."Costing Method";
+        Item."Indirect Cost %" := ItemTempl."Indirect Cost %";
+        Item."Price Includes VAT" := ItemTempl."Price Includes VAT";
+        Item."Gen. Prod. Posting Group" := ItemTempl."Gen. Prod. Posting Group";
+        Item."Automatic Ext. Texts" := ItemTempl."Automatic Ext. Texts";
+        Item."Tax Group Code" := ItemTempl."Tax Group Code";
+        Item."VAT Prod. Posting Group" := ItemTempl."VAT Prod. Posting Group";
+        Item."Item Category Code" := ItemTempl."Item Category Code";
+        Item."Service Item Group" := ItemTempl."Service Item Group";
+        Item."Warehouse Class Code" := ItemTempl."Warehouse Class Code";
+        Item.Blocked := ItemTempl.Blocked;
+        Item."Sales Blocked" := ItemTempl."Sales Blocked";
+        Item."Purchasing Blocked" := ItemTempl."Purchasing Blocked";
+        Item.Validate("Base Unit of Measure", ItemTempl."Base Unit of Measure");
+        Item.Modify(true);
+        InsertDimensions(Item."No.", ItemTempl.Code);
+    end;
 
-        END;
-    END;
+
+
+    local procedure InsertDimensions(ItemNo: Code[20]; ItemTemplCode: Code[20])
+    var
+        SourceDefaultDimension: Record "Default Dimension";
+        DestDefaultDimension: Record "Default Dimension";
+    begin
+        SourceDefaultDimension.SetRange("Table ID", Database::"Item Templ.");
+        SourceDefaultDimension.SetRange("No.", ItemTemplCode);
+        if SourceDefaultDimension.FindSet() then
+            repeat
+                DestDefaultDimension.Init();
+                DestDefaultDimension.Validate("Table ID", Database::Item);
+                DestDefaultDimension.Validate("No.", ItemNo);
+                DestDefaultDimension.Validate("Dimension Code", SourceDefaultDimension."Dimension Code");
+                DestDefaultDimension.Validate("Dimension Value Code", SourceDefaultDimension."Dimension Value Code");
+                DestDefaultDimension.Validate("Value Posting", SourceDefaultDimension."Value Posting");
+                DestDefaultDimension.Insert(true);
+            until SourceDefaultDimension.Next() = 0;
+    end;
 
 
 

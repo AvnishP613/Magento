@@ -85,7 +85,27 @@ page 70000 "Magento Setup"
                     MagentoWebManagement: Codeunit "Magento Req Mgmt";
 
                 begin
-                    MagentoWebManagement.GetItem('','1');
+                    MagentoWebManagement.GetItem('', '1');
+
+                end;
+            }
+
+            action("Get Sales Order List")
+            {
+                ApplicationArea = All;
+                ToolTip = 'Get Sales Orders';
+                Promoted = true;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+                PromotedCategory = Category4;
+
+                Image = Item;
+                trigger OnAction();
+                var
+                    MagentoWebManagement: Codeunit "Magento Req Mgmt";
+
+                begin
+                   // MagentoWebManagement.get
 
                 end;
             }

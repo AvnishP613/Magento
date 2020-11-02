@@ -57,13 +57,16 @@ table 70000 "Magento  Setup"
         {
             DataClassification = ToBeClassified;
             TableRelation = "Item Templ.";
+
         }
 
         field(7; "Customer Template"; Text[100])
         {
             DataClassification = ToBeClassified;
             TableRelation = "Customer Templ.";
+
         }
+
 
 
     }
@@ -78,7 +81,7 @@ table 70000 "Magento  Setup"
 
     var
         myInt: Integer;
-     
+
 
     trigger OnInsert()
     begin
