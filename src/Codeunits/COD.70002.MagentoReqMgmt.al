@@ -835,12 +835,14 @@ codeunit 70002 "Magento Req Mgmt"
         Node3: XmlNode;
         Node4: XmlNode;
         Node5: XmlNode;
+        Node6: XmlNode;
         eNode: XmlElement;
         eNode1: XmlElement;
         eNode2: XmlElement;
         eNode3: XmlElement;
         eNode4: XmlElement;
         eNode5: XmlElement;
+        eNode6: XmlElement;
         XmlBuff: Record "XML Buffer";
         ProdID: Text;
         Outs: OutStream;
@@ -848,18 +850,23 @@ codeunit 70002 "Magento Req Mgmt"
         Instream2: InStream;
         NewInstream: InStream;
         TotalCount: Integer;
-        //  ItemRec: Record item;
         FirstName: Text;
         CustomerID: Text;
-
-        WebSOrderRec: Record "Magento Sales Order List";
-        WebOrderID: Code[20];
+        IncrOrderID: Code[20];
         CustomerRecord: Record Customer;
         ShippingMethodText: Text;
         ShippingMethodRec: Record "Shipment Method";
         NoSereriesMgmt: Codeunit NoSeriesManagement;
         SalesSetup: Record "Sales & Receivables Setup";
+        SalesOrderH: Record "Sales Header";
+        SalesOrderL: Record "Sales Line";
+        MPayInfo: Record "Magento Payment Info";
+        LastLineNo: Integer;
+
+        
     begin
+        SalesSetup.Get();
+        SalesSetup.TestField("Order Nos.");
         MgSetup.Get();
         NewInstream := Inst2;
         ProdID := RemoveNamespaces(NewInstream);
@@ -886,31 +893,84 @@ codeunit 70002 "Magento Req Mgmt"
             if XmlDoc.SelectNodes('/Envelope/Body/salesOrderInfoResponse/result', XmlNamaespaceManager, XmlNList) then begin
                 foreach Node in XmlNList do begin
                     eNode := Node.AsXmlElement();
-                    if eNode.SelectNodes('billing_address', XmlNamaespaceManager, XmlNList1) then begin
-                        foreach Node2 in XmlNList1 do begin
-                            eNode2 := Node2.AsXmlElement();
-                        end;
-                    end;
-                    if eNode.SelectNodes('items/item', XmlNamaespaceManager, XmlNList2) then begin
-                        foreach Node3 in XmlNList2 do begin
-                            eNode3 := Node3.AsXmlElement();
-                        end;
-                    end;
-                    if eNode.SelectNodes('payment', XmlNamaespaceManager, XmlNList3) then begin
-                        foreach Node4 in XmlNList3 do begin
-                            eNode4 := Node4.AsXmlElement();
-                        end;
-                    end;
+                    Clear(IncrOrderID);
+                    Clear(FirstName);
+                    IncrOrderID := GetText(eNode, 'increment_id');
+                    FirstName := GetText(eNode, 'customer_firstname');
+                    if IncrOrderID <> '' then begin
+                        SalesOrderH.Reset();
+                        if not SalesOrderH.get(SalesOrderH."Document Type"::Order, IncrOrderID) then begin
+                            SalesOrderH.Reset();
+                            SalesOrderH.Init();
+                            CustomerRecord.Reset();
+                            CustomerRecord.SetRange("First Name", FirstName);
+                            if CustomerRecord.FindFirst() then begin
+                                SalesOrderH."No." := IncrOrderID;
+                                SalesOrderH.Validate("Sell-to Customer No.", CustomerRecord."No.");
+                                if eNode.SelectNodes('billing_address', XmlNamaespaceManager, XmlNList1) then begin
+                                    foreach Node2 in XmlNList1 do begin
+                                        eNode1 := Node1.AsXmlElement();
+                                    end;
+                                end;
 
-                    if eNode.SelectNodes('status_history', XmlNamaespaceManager, XmlNList4) then begin
-                        foreach Node5 in XmlNList4 do begin
-                            eNode5 := Node5.AsXmlElement();
+                                if eNode.SelectNodes('payment', XmlNamaespaceManager, XmlNList3) then begin
+                                    foreach Node4 in XmlNList3 do begin
+                                        eNode3 := Node3.AsXmlElement();
+                                        MPayInfo.Reset();
+                                        MPayInfo.SetRange("Order ID", IncrOrderID);
+                                        if not MPayInfo.FindFirst() then begin
+                                            MPayInfo.Reset();
+                                            MPayInfo.Init();
+                                            MPayInfo."Order ID" := IncrOrderID;
+                                            MPayInfo.cc_exp_month := GetText(eNode3, 'cc_exp_month');
+                                            MPayInfo.cc_exp_year := GetText(eNode3, 'cc_exp_year');
+                                            MPayInfo.cc_ss_start_month := GetText(eNode3, 'cc_ss_start_month');
+                                            MPayInfo.cc_ss_start_year := GetText(eNode3, 'cc_ss_start_year');
+                                            MPayInfo."Payment ID" := GetText(eNode3, 'payment_id');
+                                            MPayInfo."Parent ID" := GetText(eNode3, 'parent_id');
+                                            MPayInfo.Method := GetText(eNode3, 'method');
+                                            MPayInfo."Parent ID" := GetText(eNode3, 'parent_id');
+                                            MPayInfo."Base Amount Ordered" := GetDecimal(eNode3, 'base_amount_ordered');
+                                            MPayInfo."Shipping Amount" := GetDecimal(eNode3, 'shipping_amount');
+                                            MPayInfo."Base Shipping Amount" := GetDecimal(eNode3, 'base_shipping_amount');
+                                            MPayInfo.Insert();
+                                        end;
+                                    end;
+                                end;
+
+                                if eNode.SelectNodes('status_history', XmlNamaespaceManager, XmlNList4) then begin
+                                    foreach Node5 in XmlNList4 do begin
+                                        eNode4 := Node4.AsXmlElement();
+                                    end;
+                                end;
+
+                                if eNode.SelectNodes('shipping_address', XmlNamaespaceManager, XmlNList5) then begin
+                                    foreach Node5 in XmlNList5 do begin
+                                        eNode5 := Node5.AsXmlElement();
+                                    end;
+                                end;
+                                SalesOrderH.Insert();
+                                SalesOrderL.Reset();
+                                LastLineNo := 0;
+                                if eNode.SelectNodes('items/item', XmlNamaespaceManager, XmlNList2) then begin
+                                    foreach Node3 in XmlNList2 do begin
+                                        eNode2 := Node2.AsXmlElement();
+                                        LastLineNo += 10000;
+                                        SalesOrderL.Init();
+                                        SalesOrderL."Document Type" := SalesOrderH."Document Type";
+                                        SalesOrderL."Document No." := IncrOrderID;
+                                        SalesOrderL."Line No." := LastLineNo;
+                                        SalesOrderL.Insert();
+
+                                    end;
+                                end;
+                            end;
+
+                            InsertWebTxnLog('Web Order Single Received', 2, 1, '', '', GetText(eNode, 'increment_id'), SessionInfo."Session ID", '', '', '');
+                            TotalCount += 1;
+                            Commit();
                         end;
                     end;
-
-                    InsertWebTxnLog('Web Order Single Received', 2, 1, '', '', GetText(eNode, 'increment_id'), SessionInfo."Session ID", '', '', '');
-                    TotalCount += 1;
-                    Commit();
                 end;
 
             end;
