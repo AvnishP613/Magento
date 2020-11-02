@@ -4,9 +4,10 @@ table 70002 "Magento Web Transaction Log"
 
     fields
     {
-        field(1; "Entry No."; Guid)
+        field(1; "Entry No."; Integer)
         {
             Editable = false;
+            AutoIncrement=true;
         }
         field(2; Description; Text[100])
         {
@@ -50,11 +51,20 @@ table 70002 "Magento Web Transaction Log"
         field(13; "Item No."; Code[20])
         {
         }
-
         field(14; "User ID"; Code[50])
         {
             DataClassification = ToBeClassified;
         }
+
+        field(15; "Shipment ID"; Code[20])
+        {
+        }
+        field(16; "Invoice ID"; Code[20])
+        {
+        }
+
+
+
 
     }
 

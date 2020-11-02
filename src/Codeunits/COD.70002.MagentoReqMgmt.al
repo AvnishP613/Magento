@@ -102,6 +102,7 @@ codeunit 70002 "Magento Req Mgmt"
     begin
         MSetup.Get();
         MSetup.TestField("Customer Template");
+        MSetup.TestField("Item Template");
         IF SendLoginRequest THEN BEGIN
             GetSingleOrder(Filters);
             EndLoginRequest();
@@ -109,6 +110,35 @@ codeunit 70002 "Magento Req Mgmt"
         COMMIT;
     end;
 
+    procedure CreateSOrderShipment(Filters: Text; CText: text; SOrderID: CODE[20])
+    var
+        MSetup: Record "Magento  Setup";
+    begin
+        Clear(GlobalSOrderID);
+        GlobalSOrderID := SOrderID;
+
+        MSetup.Get();
+        IF SendLoginRequest THEN BEGIN
+            CreaterOrderShipment(Filters, CText, SOrderID);
+            EndLoginRequest();
+        END;
+        COMMIT;
+    end;
+
+
+    procedure CreateSOrderiNVOICE(Filters: Text; CText: text; SOrderID: CODE[20])
+    var
+        MSetup: Record "Magento  Setup";
+    begin
+        Clear(GlobalSOrderID);
+        GlobalSOrderID := SOrderID;
+        MSetup.Get();
+        IF SendLoginRequest THEN BEGIN
+            CreaterOrderInvoice(Filters, CText, SOrderID);
+            EndLoginRequest();
+        END;
+        COMMIT;
+    end;
 
 
     procedure SendLoginRequest(): Boolean
@@ -119,6 +149,7 @@ codeunit 70002 "Magento Req Mgmt"
         Instream1: InStream;
         OInstream: InStream;
     begin
+        Clear(ReqText);
         ReqText := WebReq.Login();
         IF CallWebServices(ReqText, Instream1) THEN BEGIN
             if not ReadError(Instream1) then begin
@@ -131,7 +162,7 @@ codeunit 70002 "Magento Req Mgmt"
         end
         else begin
             exit(false);
-            InsertWebTxnLog('Error : Login', 2, 2, '', '', '', SessionInfo."Session ID", '');
+            InsertWebTxnLog('Error : Login', 2, 2, '', '', '', SessionInfo."Session ID", '', '', '');
 
         end;
     end;
@@ -156,7 +187,7 @@ codeunit 70002 "Magento Req Mgmt"
         end
         else begin
             exit(false);
-            InsertWebTxnLog('Item:Receive Web Error', 2, 2, '', '', '', SessionInfo."Session ID", '');
+            InsertWebTxnLog('Item:Receive Web Error', 2, 2, '', '', '', SessionInfo."Session ID", '', '', '');
 
         end;
     end;
@@ -183,11 +214,61 @@ codeunit 70002 "Magento Req Mgmt"
         end
         else begin
             exit(false);
-            InsertWebTxnLog('SalesOrdersList:Receive Web Error', 2, 2, '', '', '', SessionInfo."Session ID", '');
+            InsertWebTxnLog('SalesOrdersList:Receive Web Error', 2, 2, '', '', '', SessionInfo."Session ID", '', '', '');
 
         end;
     end;
 
+
+    local procedure CreaterOrderShipment(filters: Text; CommentText: text; SOrdID: Code[20]): Boolean
+    var
+        WebReq: Codeunit "Magento Request Creation";
+        SuccessNodeText: Label 'ns1:loginResponse';
+        ReqText: Text;
+        Instream1: InStream;
+        OInstream: InStream;
+    begin
+        ReqText := WebReq.SorderShipmentCreate(SessionInfo."Session ID", CommentText, SOrdID);
+        IF CallWebServices(ReqText, Instream1) THEN BEGIN
+            if not ReadError(Instream1) then begin
+                ReadCreatedShipment(Instream1);
+                exit(true);
+            end
+            else
+                exit(false)
+
+        end
+        else begin
+            exit(false);
+            InsertWebTxnLog('CreateShipment:Receive Web Error', 2, 2, '', '', GlobalSOrderID, SessionInfo."Session ID", '', '', '');
+
+        end;
+    end;
+
+    local procedure CreaterOrderInvoice(filters: Text; CommentText: text; SOrdID: Code[20]): Boolean
+    var
+        WebReq: Codeunit "Magento Request Creation";
+        SuccessNodeText: Label 'ns1:loginResponse';
+        ReqText: Text;
+        Instream1: InStream;
+        OInstream: InStream;
+    begin
+        ReqText := WebReq.SorderInvoiceCreate(SessionInfo."Session ID", CommentText, SOrdID);
+        IF CallWebServices(ReqText, Instream1) THEN BEGIN
+            if not ReadError(Instream1) then begin
+                ReadCreatedInvoice(Instream1);
+                exit(true);
+            end
+            else
+                exit(false)
+
+        end
+        else begin
+            exit(false);
+            InsertWebTxnLog('Create Invoice:Receive Web Error', 2, 2, '', '', GlobalSOrderID, SessionInfo."Session ID", '', '', '');
+
+        end;
+    end;
 
 
     local procedure GetSingleOrder(SOrderNo: Text): Boolean
@@ -198,7 +279,7 @@ codeunit 70002 "Magento Req Mgmt"
         Instream1: InStream;
         OInstream: InStream;
     begin
-        ReqText := WebReq.SingleOrder(SessionID, SOrderNo);
+        ReqText := WebReq.SingleOrder(SessionInfo."Session ID", SOrderNo);
         IF CallWebServices(ReqText, Instream1) THEN BEGIN
             if not ReadError(Instream1) then begin
                 ReadSingleOrderList(Instream1);//  ReadOrderList(Instream1);
@@ -210,7 +291,7 @@ codeunit 70002 "Magento Req Mgmt"
         end
         else begin
             exit(false);
-            InsertWebTxnLog('SalesOrder Single:Receive Web Error', 2, 2, '', '', SOrderNo, SessionInfo."Session ID", '');
+            InsertWebTxnLog('SalesOrder Single:Receive Web Error', 2, 2, '', '', SOrderNo, SessionInfo."Session ID", '', '', '');
 
         end;
     end;
@@ -270,7 +351,7 @@ codeunit 70002 "Magento Req Mgmt"
             if XmlDoc.SelectNodes('/Envelope/Body/Fault', XmlNamaespaceManager, XmlNList) then
                 foreach Node in XmlNList do begin
                     eNode := Node.AsXmlElement();
-                    InsertWebTxnLog('Fault Code', 0, 2, GetText(eNode, 'faultcode'), GetText(eNode, 'faultstring'), '', SessionInfo."Session ID", '');
+                    InsertWebTxnLog('Fault Code', 0, 2, GetText(eNode, 'faultcode'), GetText(eNode, 'faultstring'), '', SessionInfo."Session ID", '', '', '');
                     exit(true);
                 end;
         end
@@ -318,7 +399,7 @@ codeunit 70002 "Magento Req Mgmt"
                 foreach Node in XmlNList do begin
                     eNode := Node.AsXmlElement();
                     InsertSessionDetails(GetText(eNode, 'loginReturn'));
-                    InsertWebTxnLog('Session Created', 2, 1, '', '', '', SessionInfo."Session ID", '');
+                    InsertWebTxnLog('Session Created', 2, 1, '', '', '', SessionInfo."Session ID", '', '', '');
                     exit(true);
                 end;
         end
@@ -411,7 +492,7 @@ codeunit 70002 "Magento Req Mgmt"
                                 ItemRec.Insert(true);
                                 ApplyTemplateItem(ItemRec, MgSetup."Item Template");
 
-                                InsertWebTxnLog('Item Created', 2, 1, '', '', '', SessionInfo."Session ID", GetText(eNode, 'product_id'));
+                                InsertWebTxnLog('Item Created', 2, 1, '', '', '', SessionInfo."Session ID", GetText(eNode, 'product_id'), '', '');
                                 TotalCount += 1;
                             end;
                         end
@@ -458,7 +539,7 @@ codeunit 70002 "Magento Req Mgmt"
         FirstName: Text;
         CustomerID: Text;
 
-        WebSOrderRec: Record "Web Sales Order List";
+        WebSOrderRec: Record "MAGENTO Sales Order List";
         WebOrderID: Code[20];
         CustomerRecord: Record Customer;
         ShippingMethodText: Text;
@@ -498,17 +579,17 @@ codeunit 70002 "Magento Req Mgmt"
                     FirstName := GetText(eNode, 'customer_firstname');
                     if WebOrderID <> '' then begin
                         WebSOrderRec.Reset();
-                        WebSOrderRec.SetRange("Web Order ID", WebOrderID);
+                        WebSOrderRec.SetRange("Magento Order ID", WebOrderID);
                         if not WebSOrderRec.FindFirst() then begin
                             WebSOrderRec.Reset();
                             WebSOrderRec.Init();
-                            WebSOrderRec."Web Order ID" := WebOrderID;
+                            WebSOrderRec."Magento Order ID" := WebOrderID;
                             WebSOrderRec."Last Name" := GetText(eNode, 'customer_lastname');
                             WebSOrderRec."First Name" := FirstName;
                             WebSOrderRec.Order_State := GetText(eNode, 'state');
                             WebSOrderRec.Order_Status := GetText(eNode, 'status');
                             WebSOrderRec."Order ID" := GetText(eNode, 'order_id');
-                            WebSOrderRec."Quuote ID" := GetText(eNode, 'quote_id');
+                            WebSOrderRec."Quote ID" := GetText(eNode, 'quote_id');
                             WebSOrderRec."Store ID" := GetText(eNode, 'store_id');
                             WebSOrderRec."Store Name" := GetText(eNode, 'store_name');
                             WebSOrderRec."Currency Code" := GetText(eNode, 'base_currency_code');
@@ -547,7 +628,7 @@ codeunit 70002 "Magento Req Mgmt"
                                     CustomerRecord."No." := NoSereriesMgmt.GetNextNo3(SalesSetup."Customer Nos.", WorkDate(), true, false);
                                     CustomerRecord."First Name" := FirstName;
                                     CustomerRecord."Last Name" := GetText(eNode, 'customer_lastname');
-                                    CustomerRecord.Name := FirstName + '' + CustomerRecord."Last Name";
+                                    CustomerRecord.Name := FirstName + ' ' + CustomerRecord."Last Name";
                                     CustomerRecord.Magento := true;
                                     CustomerRecord.Insert();
                                     // UpdateCustomerFromTemplate(CustomerRecord);
@@ -555,13 +636,176 @@ codeunit 70002 "Magento Req Mgmt"
                                 end;
                             end;
 
-                            InsertWebTxnLog('Web Order Created', 2, 1, '', '', GetText(eNode, 'increment_id'), SessionInfo."Session ID", '');
+                            InsertWebTxnLog('Magento Order Created', 2, 1, '', '', GetText(eNode, 'increment_id'), SessionInfo."Session ID", '', '', '');
                             TotalCount += 1;
                             Commit();
                         end;
                     end;
                 end;
 
+
+                if TotalCount > 0 then
+                    exit(true)
+                else
+                    exit(false);
+            end;
+        end
+        else
+            exit(false)
+    end;
+
+
+
+    local procedure ReadCreatedShipment(Inst2: InStream): Boolean
+    var
+
+        XmlNamaespaceManager: XmlNamespaceManager;
+        XmlDoc: XmlDocument;
+        XmlNList: XmlNodeList;
+        Node: XmlNode;
+        XmlNList2: XmlNodeList;
+        Node2: XmlNode;
+        XmlNList1: XmlNodeList;
+        Node1: XmlNode;
+        XmlNList3: XmlNodeList;
+        Node3: XmlNode;
+        eNode: XmlElement;
+        eNode1: XmlElement;
+        eNode2: XmlElement;
+        eNode3: XmlElement;
+        XmlBuff: Record "XML Buffer";
+        ProdID: Text;
+        Outs: OutStream;
+        TempB: Codeunit "Temp Blob";
+        Instream2: InStream;
+        NewInstream: InStream;
+        TotalCount: Integer;
+        //  ItemRec: Record item;
+        FirstName: Text;
+        CustomerID: Text;
+
+        WebSOrderRec: Record "Magento Sales Order List";
+        WebOrderID: Code[20];
+
+    begin
+        MgSetup.Get();
+        NewInstream := Inst2;
+        ProdID := RemoveNamespaces(NewInstream);
+
+
+        TempB.CreateOutStream(Outs);
+        Outs.WriteText(ProdID);
+
+
+        TempB.CreateInStream(Instream2);
+
+
+        if Instream2.EOS then
+            Error('Cannot Read Blank Stream');
+
+
+        if XmlDocument.ReadFrom(Instream2, XmlDoc) then begin
+            XmlNamaespaceManager.NameTable(XmlDoc.NameTable);
+            //   XmlNamaespaceManager.AddNamespace('SOAP-ENV', 'http://schemas.xmlsoap.org/soap/envelope/');
+            //   XmlNamaespaceManager.AddNamespace('ns1:loginResponse', 'http://schemas.xmlsoap.org/soap/envelope/');
+            //   XmlNamaespaceManager.AddNamespace('ns1', 'http://schemas.xmlsoap.org/soap/envelope/');
+            //   XmlNamaespaceManager.NameTable(XmlDoc.NameTable);
+            TotalCount := 0;
+            if XmlDoc.SelectNodes('/Envelope/Body/salesOrderShipmentCreateResponse', XmlNamaespaceManager, XmlNList) then begin
+                foreach Node in XmlNList do begin
+                    eNode := Node.AsXmlElement();
+
+                    InsertWebTxnLog('Create Order Shipment Created', 2, 1, '', '', GlobalSOrderID, SessionInfo."Session ID", '', GetText(eNode, 'shipmentIncrementId'), '');
+                    WebOrderID := '';
+                    WebOrderID := GetText(eNode, 'shipmentIncrementId');
+                    WebSOrderRec.Reset();
+                    WebSOrderRec.SetRange("Magento Order ID", WebOrderID);
+                    if WebSOrderRec.FindFirst() then begin
+                        WebSOrderRec."Shipment ID" := WebOrderID;
+                        WebSOrderRec.Modify();
+                    end;
+                    TotalCount += 1;
+                    Commit();
+                end;
+
+                if TotalCount > 0 then
+                    exit(true)
+                else
+                    exit(false);
+            end;
+        end
+        else
+            exit(false)
+    end;
+
+    local procedure ReadCreatedInvoice(Inst2: InStream): Boolean
+    var
+
+        XmlNamaespaceManager: XmlNamespaceManager;
+        XmlDoc: XmlDocument;
+        XmlNList: XmlNodeList;
+        Node: XmlNode;
+        XmlNList2: XmlNodeList;
+        Node2: XmlNode;
+        XmlNList1: XmlNodeList;
+        Node1: XmlNode;
+        XmlNList3: XmlNodeList;
+        Node3: XmlNode;
+        eNode: XmlElement;
+        eNode1: XmlElement;
+        eNode2: XmlElement;
+        eNode3: XmlElement;
+        XmlBuff: Record "XML Buffer";
+        ProdID: Text;
+        Outs: OutStream;
+        TempB: Codeunit "Temp Blob";
+        Instream2: InStream;
+        NewInstream: InStream;
+        TotalCount: Integer;
+
+        WebSOrderRec: Record "Magento Sales Order List";
+        WebOrderID: Code[20];
+
+    begin
+        MgSetup.Get();
+        NewInstream := Inst2;
+        ProdID := RemoveNamespaces(NewInstream);
+
+
+        TempB.CreateOutStream(Outs);
+        Outs.WriteText(ProdID);
+
+
+        TempB.CreateInStream(Instream2);
+
+
+        if Instream2.EOS then
+            Error('Cannot Read Blank Stream');
+
+
+        if XmlDocument.ReadFrom(Instream2, XmlDoc) then begin
+            XmlNamaespaceManager.NameTable(XmlDoc.NameTable);
+            //   XmlNamaespaceManager.AddNamespace('SOAP-ENV', 'http://schemas.xmlsoap.org/soap/envelope/');
+            //   XmlNamaespaceManager.AddNamespace('ns1:loginResponse', 'http://schemas.xmlsoap.org/soap/envelope/');
+            //   XmlNamaespaceManager.AddNamespace('ns1', 'http://schemas.xmlsoap.org/soap/envelope/');
+            //   XmlNamaespaceManager.NameTable(XmlDoc.NameTable);
+            TotalCount := 0;
+            if XmlDoc.SelectNodes('/Envelope/Body/salesOrderInvoiceCreateResponse', XmlNamaespaceManager, XmlNList) then begin
+                foreach Node in XmlNList do begin
+                    eNode := Node.AsXmlElement();
+
+                    InsertWebTxnLog('Create Order Invoice Created', 2, 1, '', '', GlobalSOrderID, SessionInfo."Session ID", '', '', GetText(eNode, 'result'));
+                    WebOrderID := '';
+                    WebOrderID := GetText(eNode, 'result');
+                    WebSOrderRec.Reset();
+                    WebSOrderRec.SetRange("Magento Order ID", WebOrderID);
+                    if WebSOrderRec.FindFirst() then begin
+                        WebSOrderRec."Invoice ID" := WebOrderID;
+                        WebSOrderRec.Modify();
+                    end;
+                    TotalCount += 1;
+                    Commit();
+                end;
 
                 if TotalCount > 0 then
                     exit(true)
@@ -608,7 +852,7 @@ codeunit 70002 "Magento Req Mgmt"
         FirstName: Text;
         CustomerID: Text;
 
-        WebSOrderRec: Record "Web Sales Order List";
+        WebSOrderRec: Record "Magento Sales Order List";
         WebOrderID: Code[20];
         CustomerRecord: Record Customer;
         ShippingMethodText: Text;
@@ -664,7 +908,7 @@ codeunit 70002 "Magento Req Mgmt"
                         end;
                     end;
 
-                    InsertWebTxnLog('Web Order Single Received', 2, 1, '', '', GetText(eNode, 'increment_id'), SessionInfo."Session ID", '');
+                    InsertWebTxnLog('Web Order Single Received', 2, 1, '', '', GetText(eNode, 'increment_id'), SessionInfo."Session ID", '', '', '');
                     TotalCount += 1;
                     Commit();
                 end;
@@ -724,7 +968,7 @@ codeunit 70002 "Magento Req Mgmt"
             if XmlDoc.SelectNodes('/Envelope/Body/endSessionResponse', XmlNamaespaceManager, XmlNList) then
                 foreach Node in XmlNList do begin
                     eNode := Node.AsXmlElement();
-                    InsertWebTxnLog('Session Ended', 2, 1, '', '', '', SessionInfo."Session ID", '');
+                    InsertWebTxnLog('Session Ended', 2, 1, '', '', '', SessionInfo."Session ID", '', '', '');
                     exit(true);
                 end;
         end
@@ -771,14 +1015,13 @@ codeunit 70002 "Magento Req Mgmt"
         //END;
     END;
 
-    procedure InsertWebTxnLog(Description: Text[150]; Direction: Option ,Inbound,Outbound; Status: Option ,Success,Failure; FaultCode: Code[10]; FaultDescription: Text[250]; SalesOrderNo: Code[30]; SessionID1: Text[100]; ItemNo: Code[20])
+    procedure InsertWebTxnLog(Description: Text[150]; Direction: Option ,Inbound,Outbound; Status: Option ,Success,Failure; FaultCode: Code[10]; FaultDescription: Text[250]; SalesOrderNo: Code[30]; SessionID1: Text[100]; ItemNo: Code[20]; ShipID: Code[20]; InvID: Code[20])
     var
         WebTxnLog: Record "Magento Web Transaction Log";
         OStream: OutStream;
         SessionInfo: Record "Magento Session Log";
     begin
         WebTxnLog.INIT;
-        WebTxnLog."Entry No." := CREATEGUID;
         WebTxnLog.Description := Description;
         WebTxnLog.SessionID := SessionID1;
 
@@ -790,6 +1033,8 @@ codeunit 70002 "Magento Req Mgmt"
         WebTxnLog."Fault Description" := FaultDescription;
         WebTxnLog."Sales Order No." := SalesOrderNo;
         WebTxnLog."Item No." := ItemNo;
+        WebTxnLog."Shipment ID" := ShipID;
+        WebTxnLog."Invoice ID" := InvID;
 
         WebTxnLog.INSERT(TRUE);
     end;
@@ -1055,4 +1300,5 @@ codeunit 70002 "Magento Req Mgmt"
         CustomerRecRef: RecordRef;
         ConfigTemplateManagement: Codeunit "Config. Template Management";
         DimensionsTemplate: Record "Dimensions Template";
+        GlobalSOrderID: Code[20];
 }

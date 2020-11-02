@@ -4,7 +4,7 @@ page 70002 "Magento Web Transaction"
     ApplicationArea = All;
     UsageCategory = Lists;
     SourceTable = "Magento Web Transaction Log";
-    
+
 
 
     layout
@@ -46,7 +46,15 @@ page 70002 "Magento Web Transaction"
                 {
                     ApplicationArea = All;
                 }
-                
+                field("Shipment ID"; Rec."Shipment ID")
+                {
+                    ApplicationArea = All;
+                }
+                field("Invoice ID"; Rec."Invoice ID")
+                {
+                    ApplicationArea = All;
+                }
+
                 field(Status; Rec.Status)
                 {
                     ApplicationArea = All;

@@ -37,6 +37,10 @@ page 70000 "Magento Setup"
                 {
                     ApplicationArea = All;
                 }
+                field(Store; rec.Store)
+                {
+                    ApplicationArea = All;
+                }
 
 
             }
@@ -72,13 +76,13 @@ page 70000 "Magento Setup"
 
                 action(WebSalesOrderID)
                 {
-                    Caption = 'Web Order List';
+                    Caption = 'Magento Order List';
                     ApplicationArea = All;
                     PromotedOnly = true;
                     Promoted = true;
                     Image = GetOrder;
                     PromotedCategory = Process;
-                    RunObject = page "Web Order List";
+                    RunObject = page "Magento Order List";
 
                 }
             }
@@ -97,7 +101,8 @@ page 70000 "Magento Setup"
                     MagentoWebManagement: Codeunit "Magento Req Mgmt";
 
                 begin
-                    MagentoWebManagement.GetItem('', '1');
+                    Rec.TestField(Store);
+                    MagentoWebManagement.GetItem('', Rec.Store);
 
                 end;
             }
@@ -121,6 +126,32 @@ page 70000 "Magento Setup"
 
                 end;
             }
+
+            action(DeleteRec)
+            {
+                ApplicationArea = All;
+                Promoted = true;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+
+                Image = OrderList;
+                trigger OnAction();
+                var
+                    Customer: Record Customer;
+                    Item: Record Item;
+                    WebOrder: Record "Magento Sales Order List";
+
+                begin
+                    WebOrder.DeleteAll();
+                    Item.SetRange(Magento, true);
+                    Item.DeleteAll();
+                    Customer.SetRange(Magento, true);
+                    Customer.DeleteAll();
+
+                end;
+            }
+
+
 
 
         }

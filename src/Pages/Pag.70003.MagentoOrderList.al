@@ -1,10 +1,9 @@
-page 70003 "Web Order List"
+page 70003 "Magento Order List"
 {
     PageType = List;
     ApplicationArea = All;
     UsageCategory = Lists;
-    SourceTable = "Web Sales Order List";
-
+    SourceTable = "Magento Sales Order List";
     layout
     {
         area(Content)
@@ -12,7 +11,7 @@ page 70003 "Web Order List"
             repeater(GroupName)
             {
 
-                field("Web Order ID"; Rec."Web Order ID")
+                field("Web Order ID"; Rec."Magento Order ID")
                 {
                     ApplicationArea = All;
                 }
@@ -23,6 +22,7 @@ page 70003 "Web Order List"
                 field("Store Name"; Rec."Store Name")
                 {
                     ApplicationArea = All;
+                    editable=false;
                 }
                 field(Order_State; Rec.Order_State)
                 {
@@ -52,6 +52,18 @@ page 70003 "Web Order List"
                 {
                     ApplicationArea = All;
                 }
+                field("Shipment ID"; Rec."Shipment ID")
+                {
+                    ApplicationArea = All;
+                }
+                field("Invoice ID"; Rec."Invoice ID")
+                {
+                    ApplicationArea = All;
+                }
+                field(Comment; Rec.Comment)
+                {
+                    ApplicationArea = All;
+                }
             }
         }
 
@@ -75,7 +87,44 @@ page 70003 "Web Order List"
                 var
                     MagentoReq: Codeunit "Magento Req Mgmt";
                 begin
-                    MagentoReq.GetSOrderOrderDetail(Format(rec."Web Order ID"));
+                    MagentoReq.GetSOrderOrderDetail(Format(rec."Magento Order ID"));
+                end;
+            }
+
+            action(CreateShipment)
+            {
+                ApplicationArea = All;
+                Promoted = true;
+                Caption = 'Create Shipment';
+                PromotedCategory = Process;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+                Image = ShipAddress;
+
+
+                trigger OnAction();
+                var
+                    MagentoReq: Codeunit "Magento Req Mgmt";
+                begin
+                    MagentoReq.CreateSOrderShipment('', Rec.Comment, Rec."Magento Order ID");
+                end;
+            }
+
+            action(CreateInvoice)
+            {
+                ApplicationArea = All;
+                Promoted = true;
+                PromotedCategory = Process;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+                Image = Invoice;
+
+
+                trigger OnAction();
+                var
+                    MagentoReq: Codeunit "Magento Req Mgmt";
+                begin
+                    MagentoReq.CreateSOrderiNVOICE('', Rec.Comment, Rec."Magento Order ID");
                 end;
             }
         }

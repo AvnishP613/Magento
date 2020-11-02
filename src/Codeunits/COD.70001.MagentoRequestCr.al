@@ -99,12 +99,84 @@ codeunit 70001 "Magento Request Creation"
     begin
         CreateSoapDocument(lXmlDocument, 1, lEnvolopeXmlNode, lHeaderXmlNode, lBodyXmlNode);
         XMLDomMgt.AddElement(lBodyXmlNode, 'salesOrderInfo', '', ApiNameSpace, lBodyXmlNode);
-        XMLDomMgt.AddElement(lBodyXmlNode, 'sessionId',sessionID, ApiNameSpace, lTempXmlNode);
+        XMLDomMgt.AddElement(lBodyXmlNode, 'sessionId', sessionID, ApiNameSpace, lTempXmlNode);
         XMLDomMgt.AddElement(lBodyXmlNode, 'orderIncrementId', OrderID, ApiNameSpace, lTempXmlNode);
         lXmlDocument.WriteTo(lXMLText);
         exit(lXMLText);
     end;
 
+    procedure SorderShipmentCreate(sessionID: Text; CommentText: text; SOrderID: Code[20]): Text
+    var
+        lXmlDocument: XmlDocument;
+        lEnvolopeXmlNode: XmlNode;
+        lHeaderXmlNode: XmlNode;
+        lBodyXmlNode: XmlNode;
+        lTempXmlNode: XmlNode;
+        lXMLText: Text;
+        itemsQtyNode: XmlNode;
+        ApiNameSpace: Label 'urn:Magento';
+        QtysNode: XmlNode;
+    begin
+        CreateSoapDocument(lXmlDocument, 1, lEnvolopeXmlNode, lHeaderXmlNode, lBodyXmlNode);
+
+        //Add Additional Nodes to the Soap Headers if Needed- Below is the Sample
+        XMLDomMgt.AddElement(lBodyXmlNode, 'salesOrderShipmentCreate', '', ApiNameSpace, lBodyXmlNode);
+        XMLDomMgt.AddElement(lBodyXmlNode, 'sessionId', sessionID, ApiNameSpace, lTempXmlNode);
+        XMLDomMgt.AddElement(lBodyXmlNode, 'orderIncrementId', SOrderID, ApiNameSpace, lTempXmlNode);
+        //ItemArrayCreation
+        XMLDomMgt.AddElement(lBodyXmlNode, 'itemsQty', '', ApiNameSpace, itemsQtyNode);
+        XMLDomMgt.AddElement(itemsQtyNode, 'qtys', '', ApiNameSpace, QtysNode);
+
+        //Repeat
+        XMLDomMgt.AddElement(QtysNode, 'order_item_id', '', ApiNameSpace, lTempXmlNode);
+        XMLDomMgt.AddElement(QtysNode, 'qty', '', ApiNameSpace, lTempXmlNode);
+        //Until
+        //ItemArrayCreation
+
+        XMLDomMgt.AddElement(lBodyXmlNode, 'comment', CommentText, ApiNameSpace, lTempXmlNode);
+        XMLDomMgt.AddElement(lBodyXmlNode, 'email', '0', ApiNameSpace, lTempXmlNode);
+        XMLDomMgt.AddElement(lBodyXmlNode, 'includeComment', '0', ApiNameSpace, lTempXmlNode);
+
+        lXmlDocument.WriteTo(lXMLText);
+
+        exit(lXMLText);
+    end;
+
+
+    procedure SorderInvoiceCreate(sessionID: Text; CommentText: text; SOrderID: Code[20]): Text
+    var
+        lXmlDocument: XmlDocument;
+        lEnvolopeXmlNode: XmlNode;
+        lHeaderXmlNode: XmlNode;
+        lBodyXmlNode: XmlNode;
+        itemsQtyNode: XmlNode;
+        lTempXmlNode: XmlNode;
+        lXMLText: Text;
+        ApiNameSpace: Label 'urn:Magento';
+        QtysNode: XmlNode;
+    begin
+        CreateSoapDocument(lXmlDocument, 1, lEnvolopeXmlNode, lHeaderXmlNode, lBodyXmlNode);
+
+        XMLDomMgt.AddElement(lBodyXmlNode, 'salesOrderInvoiceCreate', '', ApiNameSpace, lBodyXmlNode);
+        XMLDomMgt.AddElement(lBodyXmlNode, 'sessionId', sessionID, ApiNameSpace, lTempXmlNode);
+        XMLDomMgt.AddElement(lBodyXmlNode, 'invoiceIncrementId', SOrderID, ApiNameSpace, lTempXmlNode);
+        //ItemArrayCreation
+        XMLDomMgt.AddElement(lBodyXmlNode, 'itemsQty', '', ApiNameSpace, itemsQtyNode);
+        XMLDomMgt.AddElement(itemsQtyNode, 'qtys', '', ApiNameSpace, QtysNode);
+
+        //Repeat
+        XMLDomMgt.AddElement(QtysNode, 'order_item_id', '', ApiNameSpace, lTempXmlNode);
+        XMLDomMgt.AddElement(QtysNode, 'qty', '', ApiNameSpace, lTempXmlNode);
+        //Until
+        //ItemArrayCreation
+        XMLDomMgt.AddElement(lBodyXmlNode, 'comment', CommentText, ApiNameSpace, lTempXmlNode);
+        XMLDomMgt.AddElement(lBodyXmlNode, 'email', '', ApiNameSpace, lTempXmlNode);
+        XMLDomMgt.AddElement(lBodyXmlNode, 'includeComment', '', ApiNameSpace, lTempXmlNode);
+
+        lXmlDocument.WriteTo(lXMLText);
+
+        exit(lXMLText);
+    end;
 
     //Use this function to Create a Soap Document with Soap Version 1.1 & 1.2. This function will return the XML Document along with the reference of the created nodes like Envelope, Header & Body.
     procedure CreateSoapDocument(var pXmlDocument: XmlDocument; pVersion: Option "1.1","1.2"; var pEnvelopeXmlNode: XmlNode; var pHeaderXmlNode: XmlNode; var pBodyXmlNode: XmlNode);

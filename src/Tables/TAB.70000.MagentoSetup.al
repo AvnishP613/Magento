@@ -67,6 +67,12 @@ table 70000 "Magento  Setup"
 
         }
 
+        field(8; "Store"; Text[1])
+        {
+            DataClassification = ToBeClassified;
+
+        }
+
 
 
     }

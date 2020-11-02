@@ -1,10 +1,10 @@
-table 70003 "Web Sales Order List"
+table 70003 "Magento Sales Order List"
 {
     DataClassification = CustomerContent;
 
     fields
     {
-        field(1; "Web Order ID"; Code[20])
+        field(1; "Magento Order ID"; Code[20])
         {
             DataClassification = ToBeClassified;
 
@@ -60,7 +60,7 @@ table 70003 "Web Sales Order List"
             DataClassification = ToBeClassified;
 
         }
-        field(11; "Quuote ID"; Code[20])
+        field(11; "Quote ID"; Code[20])
         {
             DataClassification = ToBeClassified;
 
@@ -90,12 +90,27 @@ table 70003 "Web Sales Order List"
         {
             DataClassification = ToBeClassified;
         }
+        field(17; Comment; Text[30])
+        {
+            DataClassification = ToBeClassified;
+        }
+
+
+        field(18; "Shipment ID"; Code[20])
+        {
+            DataClassification = ToBeClassified;
+        }
+        field(19; "Invoice ID"; Text[30])
+        {
+            DataClassification = ToBeClassified;
+        }
+
 
     }
 
     keys
     {
-        key(PK; "Web Order ID")
+        key(PK; "Magento Order ID")
         {
             Clustered = true;
         }
