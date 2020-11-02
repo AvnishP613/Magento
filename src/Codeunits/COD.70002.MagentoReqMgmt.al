@@ -69,8 +69,10 @@ codeunit 70002 "Magento Req Mgmt"
 
     procedure GetItem(Filters: Text; StoreView: Text[1])
     var
-
+        MSetup: Record "Magento  Setup";
     begin
+        MSetup.Get();
+        MSetup.TestField("Item Template");
         IF SendLoginRequest THEN BEGIN
             GetItemDetails(Filters, StoreView);
             EndLoginRequest();
@@ -123,7 +125,7 @@ codeunit 70002 "Magento Req Mgmt"
         end
         else begin
             exit(false);
-            InsertWebTxnLog('Item:Receive', 2, 2, '', '', '', SessionInfo."Session ID", '');
+            InsertWebTxnLog('Item:Receive Web Error', 2, 2, '', '', '', SessionInfo."Session ID", '');
 
         end;
     end;
@@ -286,7 +288,7 @@ codeunit 70002 "Magento Req Mgmt"
             //   XmlNamaespaceManager.AddNamespace('ns1', 'http://schemas.xmlsoap.org/soap/envelope/');
             //   XmlNamaespaceManager.NameTable(XmlDoc.NameTable);
             TotalCount := 0;
-            if XmlDoc.SelectNodes('/Envelope/Body/catalogProductListResponse/storeView/item', XmlNamaespaceManager, XmlNList) then
+            if XmlDoc.SelectNodes('/Envelope/Body/catalogProductListResponse/storeView/item', XmlNamaespaceManager, XmlNList) then begin
                 foreach Node in XmlNList do begin
                     eNode := Node.AsXmlElement();
                     if eNode.SelectNodes('website_ids', XmlNamaespaceManager, XmlNList1) then begin
@@ -302,13 +304,13 @@ codeunit 70002 "Magento Req Mgmt"
                         end;
                         InsertWebTxnLog('Item Created', 2, 1, '', '', '', SessionInfo."Session ID", GetText(eNode, 'product_id'));
                         TotalCount += 1;
-
                     end;
-                    if TotalCount > 0 then
-                        exit(true)
-                    else
-                        exit(false);
-                end;
+                end
+            end;
+            if TotalCount > 0 then
+                exit(true)
+            else
+                exit(false);
         end
         else
             exit(false)
@@ -331,6 +333,7 @@ codeunit 70002 "Magento Req Mgmt"
         Instream2: InStream;
         NewInstream: InStream;
     begin
+
         NewInstream := Inst2;
         ProdID := RemoveNamespaces(NewInstream);
 
@@ -392,6 +395,7 @@ codeunit 70002 "Magento Req Mgmt"
         WebTxnLog."Entry No." := CREATEGUID;
         WebTxnLog.Description := Description;
         WebTxnLog.SessionID := SessionID1;
+
         WebTxnLog."Action Date" := TODAY;
         WebTxnLog."Action Time" := TIME;
         WebTxnLog.Direction := Direction;
@@ -602,6 +606,7 @@ codeunit 70002 "Magento Req Mgmt"
             DimensionsTemplate.InsertDimensionsFromTemplates(ConfigTemplateHeader, Item."No.", DATABASE::Item);
             ItemRecRef.SETTABLE(Item);
             Item.FIND;
+
         END;
     END;
 

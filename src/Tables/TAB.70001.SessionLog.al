@@ -19,7 +19,12 @@ table 70001 "Magento Session Log"
         {
             DataClassification = ToBeClassified;
         }
-      
+
+        field(4; "User ID"; Code[50])
+        {
+            DataClassification = ToBeClassified;
+        }
+
     }
 
     keys
@@ -36,6 +41,7 @@ table 70001 "Magento Session Log"
     trigger OnInsert()
     begin
         "Session Data Time" := CurrentDateTime;
+        "User ID" := UserId;
     end;
 
     trigger OnModify()

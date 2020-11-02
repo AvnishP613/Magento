@@ -51,6 +51,11 @@ table 70002 "Magento Web Transaction Log"
         {
         }
 
+        field(14; "User ID"; Code[50])
+        {
+            DataClassification = ToBeClassified;
+        }
+
     }
 
     keys
@@ -64,6 +69,13 @@ table 70002 "Magento Web Transaction Log"
     fieldgroups
     {
     }
+
+    trigger OnInsert()
+    var
+        myInt: Integer;
+    begin
+        "User ID" := UserId;
+    end;
 
     trigger OnDelete()
     begin

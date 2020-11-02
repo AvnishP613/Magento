@@ -4,6 +4,8 @@ page 70002 "Magento Web Transaction"
     ApplicationArea = All;
     UsageCategory = Lists;
     SourceTable = "Magento Web Transaction Log";
+    
+
 
     layout
     {
@@ -40,6 +42,11 @@ page 70002 "Magento Web Transaction"
                 {
                     ApplicationArea = All;
                 }
+                field("Item No."; Rec."Item No.")
+                {
+                    ApplicationArea = All;
+                }
+                
                 field(Status; Rec.Status)
                 {
                     ApplicationArea = All;

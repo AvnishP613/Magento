@@ -6,6 +6,7 @@ page 70001 "Magento Session Info"
     SourceTable = "Magento Session Log";
 
 
+
     layout
     {
         area(Content)
