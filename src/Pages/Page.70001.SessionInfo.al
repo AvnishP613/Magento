@@ -24,14 +24,7 @@ page 70001 "Magento Session Info"
                 {
                     ApplicationArea = All;
                 }
-                field("End Session"; Rec."End Session")
-                {
-                    ApplicationArea = All;
-                }
-                field("End Session DateTime"; Rec."End Session DateTime")
-                {
-                    ApplicationArea = All;
-                }
+
             }
         }
         area(Factboxes)

@@ -19,14 +19,7 @@ table 70001 "Magento Session Log"
         {
             DataClassification = ToBeClassified;
         }
-        field(4; "End Session"; Boolean)
-        {
-            DataClassification = ToBeClassified;
-        }
-        field(5; "End Session DateTime"; DateTime)
-        {
-            DataClassification = ToBeClassified;
-        }
+      
     }
 
     keys
