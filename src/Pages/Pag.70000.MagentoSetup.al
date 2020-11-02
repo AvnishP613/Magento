@@ -82,17 +82,37 @@ page 70000 "Magento Setup"
                 Image = Item;
                 trigger OnAction();
                 var
-                 
+
                 begin
 
-                
+
+                end;
+            }
+
+            action(Login)
+            {
+                ApplicationArea = All;
+                Promoted = true;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+                PromotedCategory = Category5;
+
+                Image = LogSetup;
+                trigger OnAction()
+                var
+                    MagentoReq: Codeunit "Magento Web Request";
+                    TextValue: Text;
+                begin
+                    TextValue := MagentoReq.Login();
+                    Message(TextValue);
+
                 end;
             }
         }
     }
 
     var
-      
+
 }
 
 
