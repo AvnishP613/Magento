@@ -19,11 +19,6 @@ page 70003 "Magento Order List"
                 {
                     ApplicationArea = All;
                 }
-                field("Store Name"; Rec."Store Name")
-                {
-                    ApplicationArea = All;
-                    editable=false;
-                }
                 field(Order_State; Rec.Order_State)
                 {
                     ApplicationArea = All;
@@ -125,6 +120,28 @@ page 70003 "Magento Order List"
                     MagentoReq: Codeunit "Magento Req Mgmt";
                 begin
                     MagentoReq.CreateSOrderiNVOICE('', Rec.Comment, Rec."Magento Order ID");
+                end;
+            }
+
+            action(Card)
+            {
+                ApplicationArea = All;
+                Promoted = true;
+                PromotedCategory = Process;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+                Image = Card;
+
+
+                trigger OnAction();
+                var
+                    MSHeader: Record "Magento Sales Header";
+                begin
+                    MSHeader.SetRange("Magento Sales Order ID", rec."Magento Order ID");
+                    if MSHeader.FindFirst() then
+                        Page.Run(page::"Magento Sales Order", MSHeader)
+                    else
+                        Error('Generate Order First');
                 end;
             }
         }
