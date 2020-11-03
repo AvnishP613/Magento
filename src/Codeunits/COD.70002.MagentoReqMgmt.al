@@ -152,8 +152,8 @@ codeunit 70002 "Magento Req Mgmt"
         Clear(ReqText);
         ReqText := WebReq.Login();
         IF CallWebServices(ReqText, Instream1) THEN BEGIN
-            if not ReadError(Instream1) then begin
-                ReadSession(Instream1);
+            if not ReadError(Instream1, ReqText) then begin
+                ReadSession(Instream1, ReqText);
                 exit(true);
             end
             else
@@ -162,7 +162,7 @@ codeunit 70002 "Magento Req Mgmt"
         end
         else begin
             exit(false);
-            InsertWebTxnLog('Error : Login', 2, 2, '', '', '', SessionInfo."Session ID", '', '', '');
+            InsertWebTxnLog('Error : Login', 2, 2, '', '', '', SessionInfo."Session ID", '', '', '', Instream1, ReqText);
 
         end;
     end;
@@ -177,8 +177,8 @@ codeunit 70002 "Magento Req Mgmt"
     begin
         ReqText := WebReq.ProductList(filters, SessionInfo."Session ID", storeview);
         IF CallWebServices(ReqText, Instream1) THEN BEGIN
-            if not ReadError(Instream1) then begin
-                ReadItemList(Instream1);
+            if not ReadError(Instream1, ReqText) then begin
+                ReadItemList(Instream1, ReqText);
                 exit(true);
             end
             else
@@ -187,7 +187,7 @@ codeunit 70002 "Magento Req Mgmt"
         end
         else begin
             exit(false);
-            InsertWebTxnLog('Item:Receive Web Error', 2, 2, '', '', '', SessionInfo."Session ID", '', '', '');
+            InsertWebTxnLog('Item:Receive Web Error', 2, 2, '', '', '', SessionInfo."Session ID", '', '', '', Instream1, ReqText);
 
         end;
     end;
@@ -204,8 +204,8 @@ codeunit 70002 "Magento Req Mgmt"
     begin
         ReqText := WebReq.SOrderList(SessionInfo."Session ID", filters);
         IF CallWebServices(ReqText, Instream1) THEN BEGIN
-            if not ReadError(Instream1) then begin
-                ReadOrderList(Instream1);
+            if not ReadError(Instream1, ReqText) then begin
+                ReadOrderList(Instream1, ReqText);
                 exit(true);
             end
             else
@@ -214,7 +214,7 @@ codeunit 70002 "Magento Req Mgmt"
         end
         else begin
             exit(false);
-            InsertWebTxnLog('SalesOrdersList:Receive Web Error', 2, 2, '', '', '', SessionInfo."Session ID", '', '', '');
+            InsertWebTxnLog('SalesOrdersList:Receive Web Error', 2, 2, '', '', '', SessionInfo."Session ID", '', '', '', Instream1, ReqText);
 
         end;
     end;
@@ -230,8 +230,8 @@ codeunit 70002 "Magento Req Mgmt"
     begin
         ReqText := WebReq.SorderShipmentCreate(SessionInfo."Session ID", CommentText, SOrdID);
         IF CallWebServices(ReqText, Instream1) THEN BEGIN
-            if not ReadError(Instream1) then begin
-                ReadCreatedShipment(Instream1);
+            if not ReadError(Instream1, ReqText) then begin
+                ReadCreatedShipment(Instream1, ReqText);
                 exit(true);
             end
             else
@@ -240,7 +240,7 @@ codeunit 70002 "Magento Req Mgmt"
         end
         else begin
             exit(false);
-            InsertWebTxnLog('CreateShipment:Receive Web Error', 2, 2, '', '', GlobalSOrderID, SessionInfo."Session ID", '', '', '');
+            InsertWebTxnLog('CreateShipment:Receive Web Error', 2, 2, '', '', GlobalSOrderID, SessionInfo."Session ID", '', '', '', Instream1, ReqText);
 
         end;
     end;
@@ -255,8 +255,8 @@ codeunit 70002 "Magento Req Mgmt"
     begin
         ReqText := WebReq.SorderInvoiceCreate(SessionInfo."Session ID", CommentText, SOrdID);
         IF CallWebServices(ReqText, Instream1) THEN BEGIN
-            if not ReadError(Instream1) then begin
-                ReadCreatedInvoice(Instream1);
+            if not ReadError(Instream1, ReqText) then begin
+                ReadCreatedInvoice(Instream1, ReqText);
                 exit(true);
             end
             else
@@ -265,7 +265,7 @@ codeunit 70002 "Magento Req Mgmt"
         end
         else begin
             exit(false);
-            InsertWebTxnLog('Create Invoice:Receive Web Error', 2, 2, '', '', GlobalSOrderID, SessionInfo."Session ID", '', '', '');
+            InsertWebTxnLog('Create Invoice:Receive Web Error', 2, 2, '', '', GlobalSOrderID, SessionInfo."Session ID", '', '', '', Instream1, ReqText);
 
         end;
     end;
@@ -281,8 +281,8 @@ codeunit 70002 "Magento Req Mgmt"
     begin
         ReqText := WebReq.SingleOrder(SessionInfo."Session ID", SOrderNo);
         IF CallWebServices(ReqText, Instream1) THEN BEGIN
-            if not ReadError(Instream1) then begin
-                ReadSingleOrderList(Instream1);//  ReadOrderList(Instream1);
+            if not ReadError(Instream1, ReqText) then begin
+                ReadSingleOrderList(Instream1, ReqText);//  ReadOrderList(Instream1);
                 exit(true);
             end
             else
@@ -291,7 +291,7 @@ codeunit 70002 "Magento Req Mgmt"
         end
         else begin
             exit(false);
-            InsertWebTxnLog('SalesOrder Single:Receive Web Error', 2, 2, '', '', SOrderNo, SessionInfo."Session ID", '', '', '');
+            InsertWebTxnLog('SalesOrder Single:Receive Web Error', 2, 2, '', '', SOrderNo, SessionInfo."Session ID", '', '', '', Instream1, ReqText);
 
         end;
     end;
@@ -306,8 +306,8 @@ codeunit 70002 "Magento Req Mgmt"
     begin
         ReqText := WebReq.EndSession(SessionInfo."Session ID");
         IF CallWebServices(ReqText, Instream1) THEN BEGIN
-            if not ReadError(Instream1) then begin
-                ReadEndSession(Instream1);
+            if not ReadError(Instream1, ReqText) then begin
+                ReadEndSession(Instream1, ReqText);
                 exit(true);
             end else
                 exit(false)
@@ -317,7 +317,7 @@ codeunit 70002 "Magento Req Mgmt"
     end;
 
 
-    local procedure ReadError(Inst: InStream): Boolean
+    local procedure ReadError(Inst: InStream; ReqText: Text): Boolean
     var
         XmlNamaespaceManager: XmlNamespaceManager;
         XmlDoc: XmlDocument;
@@ -351,7 +351,7 @@ codeunit 70002 "Magento Req Mgmt"
             if XmlDoc.SelectNodes('/Envelope/Body/Fault', XmlNamaespaceManager, XmlNList) then
                 foreach Node in XmlNList do begin
                     eNode := Node.AsXmlElement();
-                    InsertWebTxnLog('Fault Code', 0, 2, GetText(eNode, 'faultcode'), GetText(eNode, 'faultstring'), '', SessionInfo."Session ID", '', '', '');
+                    InsertWebTxnLog('Fault Code', 0, 2, GetText(eNode, 'faultcode'), GetText(eNode, 'faultstring'), '', SessionInfo."Session ID", '', '', '', Inst, ReqText);
                     exit(true);
                 end;
         end
@@ -359,7 +359,7 @@ codeunit 70002 "Magento Req Mgmt"
             exit(false)
     end;
 
-    local procedure ReadSession(Inst2: InStream): Boolean
+    local procedure ReadSession(Inst2: InStream; Request: Text): Boolean
     var
         myInt: Integer;
         XmlNamaespaceManager: XmlNamespaceManager;
@@ -399,7 +399,7 @@ codeunit 70002 "Magento Req Mgmt"
                 foreach Node in XmlNList do begin
                     eNode := Node.AsXmlElement();
                     InsertSessionDetails(GetText(eNode, 'loginReturn'));
-                    InsertWebTxnLog('Session Created', 2, 1, '', '', '', SessionInfo."Session ID", '', '', '');
+                    InsertWebTxnLog('Session Created', 2, 1, '', '', '', SessionInfo."Session ID", '', '', '', Inst2, Request);
                     exit(true);
                 end;
         end
@@ -407,7 +407,7 @@ codeunit 70002 "Magento Req Mgmt"
             exit(false)
     end;
 
-    local procedure ReadItemList(Inst2: InStream): Boolean
+    local procedure ReadItemList(Inst2: InStream; ReqUEST: Text): Boolean
     var
 
         XmlNamaespaceManager: XmlNamespaceManager;
@@ -492,7 +492,7 @@ codeunit 70002 "Magento Req Mgmt"
                                 ItemRec.Insert(true);
                                 ApplyTemplateItem(ItemRec, MgSetup."Item Template");
 
-                                InsertWebTxnLog('Item Created', 2, 1, '', '', '', SessionInfo."Session ID", GetText(eNode, 'product_id'), '', '');
+                                InsertWebTxnLog('Item Created', 2, 1, '', '', '', SessionInfo."Session ID", GetText(eNode, 'product_id'), '', '', Inst2, ReqUEST);
                                 TotalCount += 1;
                             end;
                         end
@@ -511,7 +511,7 @@ codeunit 70002 "Magento Req Mgmt"
 
 
 
-    local procedure ReadOrderList(Inst2: InStream): Boolean
+    local procedure ReadOrderList(Inst2: InStream; request: Text): Boolean
     var
 
         XmlNamaespaceManager: XmlNamespaceManager;
@@ -636,7 +636,7 @@ codeunit 70002 "Magento Req Mgmt"
                                 end;
                             end;
 
-                            InsertWebTxnLog('Magento Order Created', 2, 1, '', '', GetText(eNode, 'increment_id'), SessionInfo."Session ID", '', '', '');
+                            InsertWebTxnLog('Magento Order Created', 2, 1, '', '', GetText(eNode, 'increment_id'), SessionInfo."Session ID", '', '', '', Inst2, request);
                             TotalCount += 1;
                             Commit();
                         end;
@@ -656,7 +656,7 @@ codeunit 70002 "Magento Req Mgmt"
 
 
 
-    local procedure ReadCreatedShipment(Inst2: InStream): Boolean
+    local procedure ReadCreatedShipment(Inst2: InStream; rEQUEST: Text): Boolean
     var
 
         XmlNamaespaceManager: XmlNamespaceManager;
@@ -715,7 +715,7 @@ codeunit 70002 "Magento Req Mgmt"
                 foreach Node in XmlNList do begin
                     eNode := Node.AsXmlElement();
 
-                    InsertWebTxnLog('Create Order Shipment Created', 2, 1, '', '', GlobalSOrderID, SessionInfo."Session ID", '', GetText(eNode, 'shipmentIncrementId'), '');
+                    InsertWebTxnLog('Create Order Shipment Created', 2, 1, '', '', GlobalSOrderID, SessionInfo."Session ID", '', GetText(eNode, 'shipmentIncrementId'), '', Inst2, rEQUEST);
                     WebOrderID := '';
                     WebOrderID := GetText(eNode, 'shipmentIncrementId');
                     WebSOrderRec.Reset();
@@ -738,7 +738,7 @@ codeunit 70002 "Magento Req Mgmt"
             exit(false)
     end;
 
-    local procedure ReadCreatedInvoice(Inst2: InStream): Boolean
+    local procedure ReadCreatedInvoice(Inst2: InStream; REQUEST: Text): Boolean
     var
 
         XmlNamaespaceManager: XmlNamespaceManager;
@@ -794,7 +794,7 @@ codeunit 70002 "Magento Req Mgmt"
                 foreach Node in XmlNList do begin
                     eNode := Node.AsXmlElement();
 
-                    InsertWebTxnLog('Create Order Invoice Created', 2, 1, '', '', GlobalSOrderID, SessionInfo."Session ID", '', '', GetText(eNode, 'result'));
+                    InsertWebTxnLog('Create Order Invoice Created', 2, 1, '', '', GlobalSOrderID, SessionInfo."Session ID", '', '', GetText(eNode, 'result'), Inst2, REQUEST);
                     WebOrderID := '';
                     WebOrderID := GetText(eNode, 'result');
                     WebSOrderRec.Reset();
@@ -818,7 +818,7 @@ codeunit 70002 "Magento Req Mgmt"
     end;
 
 
-    local procedure ReadSingleOrderList(Inst2: InStream): Boolean
+    local procedure ReadSingleOrderList(Inst2: InStream; REQUEST: Text): Boolean
     var
 
         XmlNamaespaceManager: XmlNamespaceManager;
@@ -1001,7 +1001,7 @@ codeunit 70002 "Magento Req Mgmt"
                             end;
                         end;
 
-                        InsertWebTxnLog('Web Order Single Received', 2, 1, '', '', GetText(eNode, 'increment_id'), SessionInfo."Session ID", '', '', '');
+                        InsertWebTxnLog('Web Order Single Received', 2, 1, '', '', GetText(eNode, 'increment_id'), SessionInfo."Session ID", '', '', '', Inst2, REQUEST);
                         TotalCount += 1;
                         Message('Order Generated Successfully');
                         Commit();
@@ -1023,7 +1023,7 @@ codeunit 70002 "Magento Req Mgmt"
 
 
 
-    local procedure ReadEndSession(Inst2: InStream): Boolean
+    local procedure ReadEndSession(Inst2: InStream; Request: Text): Boolean
     var
         myInt: Integer;
         XmlNamaespaceManager: XmlNamespaceManager;
@@ -1063,7 +1063,7 @@ codeunit 70002 "Magento Req Mgmt"
             if XmlDoc.SelectNodes('/Envelope/Body/endSessionResponse', XmlNamaespaceManager, XmlNList) then
                 foreach Node in XmlNList do begin
                     eNode := Node.AsXmlElement();
-                    InsertWebTxnLog('Session Ended', 2, 1, '', '', '', SessionInfo."Session ID", '', '', '');
+                    InsertWebTxnLog('Session Ended', 2, 1, '', '', '', SessionInfo."Session ID", '', '', '', Inst2, Request);
                     exit(true);
                 end;
         end
@@ -1110,16 +1110,18 @@ codeunit 70002 "Magento Req Mgmt"
         //END;
     END;
 
-    procedure InsertWebTxnLog(Description: Text[150]; Direction: Option ,Inbound,Outbound; Status: Option ,Success,Failure; FaultCode: Code[10]; FaultDescription: Text[250]; SalesOrderNo: Code[30]; SessionID1: Text[100]; ItemNo: Code[20]; ShipID: Code[20]; InvID: Code[20])
+    procedure InsertWebTxnLog(Description: Text[150]; Direction: Option ,Inbound,Outbound; Status: Option ,Success,Failure; FaultCode: Code[10]; FaultDescription: Text[250]; SalesOrderNo: Code[30]; SessionID1: Text[100]; ItemNo: Code[20]; ShipID: Code[20]; InvID: Code[20]; Instream3: InStream; ReqText1: Text)
     var
         WebTxnLog: Record "Magento Web Transaction Log";
         OStream: OutStream;
         SessionInfo: Record "Magento Session Log";
+        Outstream1: OutStream;
     begin
         WebTxnLog.INIT;
         WebTxnLog.Description := Description;
         WebTxnLog.SessionID := SessionID1;
-
+        WebTxnLog."Response XML".CreateOutStream(OStream);
+        CopyStream(OStream, Instream3);
         WebTxnLog."Action Date" := TODAY;
         WebTxnLog."Action Time" := TIME;
         WebTxnLog.Direction := Direction;
@@ -1130,7 +1132,10 @@ codeunit 70002 "Magento Req Mgmt"
         WebTxnLog."Item No." := ItemNo;
         WebTxnLog."Shipment ID" := ShipID;
         WebTxnLog."Invoice ID" := InvID;
-
+        IF ReqText1 <> '' then begin
+            WebTxnLog."Request XML".CreateOutStream(Outstream1);
+            Outstream1.WriteText(ReqText1);
+        end;
         WebTxnLog.INSERT(TRUE);
     end;
 

@@ -144,6 +144,8 @@ page 70000 "Magento Setup"
                     Mheader: Record "Magento Sales Header";
                     mline: Record "Magento Sales Line";
                     payinfo: Record "Magento Payment Info";
+                    SessionInfo: Record "Magento Session Log";
+                    TranactionLog: Record "Magento Web Transaction Log";
 
                 begin
                     WebOrder.DeleteAll();
@@ -154,6 +156,9 @@ page 70000 "Magento Setup"
                     Mheader.DeleteAll();
                     mline.DeleteAll();
                     payinfo.DeleteAll();//Demo Purpose
+                    SessionInfo.DeleteAll();
+                    TranactionLog.DeleteAll();
+
 
                 end;
             }
