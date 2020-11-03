@@ -858,12 +858,12 @@ codeunit 70002 "Magento Req Mgmt"
         ShippingMethodRec: Record "Shipment Method";
         NoSereriesMgmt: Codeunit NoSeriesManagement;
         SalesSetup: Record "Sales & Receivables Setup";
-        SalesOrderH: Record "Sales Header";
-        SalesOrderL: Record "Sales Line";
+        MSalesOrderH: Record "Magento Sales Header";
+        MSalesOrderL: Record "Magento Sales Line";
         MPayInfo: Record "Magento Payment Info";
         LastLineNo: Integer;
 
-        
+
     begin
         SalesSetup.Get();
         SalesSetup.TestField("Order Nos.");
@@ -898,78 +898,113 @@ codeunit 70002 "Magento Req Mgmt"
                     IncrOrderID := GetText(eNode, 'increment_id');
                     FirstName := GetText(eNode, 'customer_firstname');
                     if IncrOrderID <> '' then begin
-                        SalesOrderH.Reset();
-                        if not SalesOrderH.get(SalesOrderH."Document Type"::Order, IncrOrderID) then begin
-                            SalesOrderH.Reset();
-                            SalesOrderH.Init();
-                            CustomerRecord.Reset();
-                            CustomerRecord.SetRange("First Name", FirstName);
-                            if CustomerRecord.FindFirst() then begin
-                                SalesOrderH."No." := IncrOrderID;
-                                SalesOrderH.Validate("Sell-to Customer No.", CustomerRecord."No.");
-                                if eNode.SelectNodes('billing_address', XmlNamaespaceManager, XmlNList1) then begin
-                                    foreach Node2 in XmlNList1 do begin
-                                        eNode1 := Node1.AsXmlElement();
-                                    end;
-                                end;
+                        mSalesOrderH.Reset();
+                        if not mSalesOrderH.get(IncrOrderID) then begin
+                            mSalesOrderH.Reset();
+                            mSalesOrderH.Init();
+                            mSalesOrderH."Magento Sales Order ID" := IncrOrderID;
+                            MSalesOrderH."First Name" := GetText(eNode, 'customer_firstname');
+                            MSalesOrderH."Last Name" := GetText(eNode, 'customer_lastname');
+                            MSalesOrderH."Quote ID" := GetText(eNode, 'quote_id');
+                            MSalesOrderH."Currency Code" := GetText(eNode, 'order_currency_code');
+                            MSalesOrderH."Shipping Mehtod" := GetText(eNode, 'shipping_method');
+                            MSalesOrderH."Total Qty Ordered" := GetDecimal(eNode, 'total_qty_ordered');
+                            MSalesOrderH."Grand Total" := GetDecimal(eNode, 'grand_total');
+                            MSalesOrderH."Order State" := gettext(eNode, 'state');
+                            MSalesOrderH.Status := gettext(eNode, 'status');
+                            MSalesOrderH."Created at" := CurrentDateTime;
 
-                                if eNode.SelectNodes('payment', XmlNamaespaceManager, XmlNList3) then begin
-                                    foreach Node4 in XmlNList3 do begin
-                                        eNode3 := Node3.AsXmlElement();
+                            if eNode.SelectNodes('billing_address', XmlNamaespaceManager, XmlNList1) then begin
+                                foreach Node1 in XmlNList1 do begin
+                                    eNode1 := Node1.AsXmlElement();
+                                    MSalesOrderH."Bill-to Name" := GetText(eNode1, 'firstname');
+                                    MSalesOrderH."Bill-to Name 2" := GetText(eNode1, 'lastname');
+                                    MSalesOrderH."Bill-to Post Code" := GetText(eNode1, 'postcode');
+                                    MSalesOrderH."Bill-to City" := GetText(eNode1, 'city');
+                                    MSalesOrderH."Bill-to Address" := GetText(eNode1, 'street');
+                                    ;//street
+                                    MSalesOrderH."Bill-to Country/Region Code" := GetText(eNode1, 'country_id');
+                                end;
+                            end;
+
+                            if eNode.SelectNodes('payment', XmlNamaespaceManager, XmlNList3) then begin
+                                foreach Node3 in XmlNList3 do begin
+                                    eNode3 := Node3.AsXmlElement();
+                                    MPayInfo.Reset();
+                                    MPayInfo.SetRange("Order ID", IncrOrderID);
+                                    if not MPayInfo.FindFirst() then begin
                                         MPayInfo.Reset();
-                                        MPayInfo.SetRange("Order ID", IncrOrderID);
-                                        if not MPayInfo.FindFirst() then begin
-                                            MPayInfo.Reset();
-                                            MPayInfo.Init();
-                                            MPayInfo."Order ID" := IncrOrderID;
-                                            MPayInfo.cc_exp_month := GetText(eNode3, 'cc_exp_month');
-                                            MPayInfo.cc_exp_year := GetText(eNode3, 'cc_exp_year');
-                                            MPayInfo.cc_ss_start_month := GetText(eNode3, 'cc_ss_start_month');
-                                            MPayInfo.cc_ss_start_year := GetText(eNode3, 'cc_ss_start_year');
-                                            MPayInfo."Payment ID" := GetText(eNode3, 'payment_id');
-                                            MPayInfo."Parent ID" := GetText(eNode3, 'parent_id');
-                                            MPayInfo.Method := GetText(eNode3, 'method');
-                                            MPayInfo."Parent ID" := GetText(eNode3, 'parent_id');
-                                            MPayInfo."Base Amount Ordered" := GetDecimal(eNode3, 'base_amount_ordered');
-                                            MPayInfo."Shipping Amount" := GetDecimal(eNode3, 'shipping_amount');
-                                            MPayInfo."Base Shipping Amount" := GetDecimal(eNode3, 'base_shipping_amount');
-                                            MPayInfo.Insert();
-                                        end;
-                                    end;
-                                end;
-
-                                if eNode.SelectNodes('status_history', XmlNamaespaceManager, XmlNList4) then begin
-                                    foreach Node5 in XmlNList4 do begin
-                                        eNode4 := Node4.AsXmlElement();
-                                    end;
-                                end;
-
-                                if eNode.SelectNodes('shipping_address', XmlNamaespaceManager, XmlNList5) then begin
-                                    foreach Node5 in XmlNList5 do begin
-                                        eNode5 := Node5.AsXmlElement();
-                                    end;
-                                end;
-                                SalesOrderH.Insert();
-                                SalesOrderL.Reset();
-                                LastLineNo := 0;
-                                if eNode.SelectNodes('items/item', XmlNamaespaceManager, XmlNList2) then begin
-                                    foreach Node3 in XmlNList2 do begin
-                                        eNode2 := Node2.AsXmlElement();
-                                        LastLineNo += 10000;
-                                        SalesOrderL.Init();
-                                        SalesOrderL."Document Type" := SalesOrderH."Document Type";
-                                        SalesOrderL."Document No." := IncrOrderID;
-                                        SalesOrderL."Line No." := LastLineNo;
-                                        SalesOrderL.Insert();
-
+                                        MPayInfo.Init();
+                                        MPayInfo."Order ID" := IncrOrderID;
+                                        MPayInfo.cc_exp_month := GetText(eNode3, 'cc_exp_month');
+                                        MPayInfo.cc_exp_year := GetText(eNode3, 'cc_exp_year');
+                                        MPayInfo.cc_ss_start_month := GetText(eNode3, 'cc_ss_start_month');
+                                        MPayInfo.cc_ss_start_year := GetText(eNode3, 'cc_ss_start_year');
+                                        MPayInfo."Payment ID" := GetText(eNode3, 'payment_id');
+                                        MPayInfo."Parent ID" := GetText(eNode3, 'parent_id');
+                                        MPayInfo.Method := GetText(eNode3, 'method');
+                                        MPayInfo."Parent ID" := GetText(eNode3, 'parent_id');
+                                        MPayInfo."Base Amount Ordered" := GetDecimal(eNode3, 'base_amount_ordered');
+                                        MPayInfo."Shipping Amount" := GetDecimal(eNode3, 'shipping_amount');
+                                        MPayInfo."Base Shipping Amount" := GetDecimal(eNode3, 'base_shipping_amount');
+                                        MPayInfo.Insert();
                                     end;
                                 end;
                             end;
 
-                            InsertWebTxnLog('Web Order Single Received', 2, 1, '', '', GetText(eNode, 'increment_id'), SessionInfo."Session ID", '', '', '');
-                            TotalCount += 1;
-                            Commit();
+                            if eNode.SelectNodes('status_history', XmlNamaespaceManager, XmlNList4) then begin
+                                foreach Node4 in XmlNList4 do begin
+                                    eNode4 := Node4.AsXmlElement();
+                                end;
+                            end;
+
+                            if eNode.SelectNodes('shipping_address', XmlNamaespaceManager, XmlNList5) then begin
+                                foreach Node5 in XmlNList5 do begin
+                                    eNode5 := Node5.AsXmlElement();
+                                    MSalesOrderH."Ship-to Name" := GetText(eNode5, 'firstname');
+                                    MSalesOrderH."Ship-to Name 2" := GetText(eNode5, 'lastname');
+                                    MSalesOrderH."Ship-to Address" := GetText(eNode5, 'street');
+                                    ;//street
+                                    MSalesOrderH."Ship-to Post Code" := GetText(eNode5, 'postcode');
+                                    MSalesOrderH."Ship-to City" := GetText(eNode5, 'city');
+                                    MSalesOrderH."Ship-to Country/Region Code" := GetText(eNode5, 'country_id');
+
+                                end;
+                            end;
+                            mSalesOrderH.Insert(true);
+                            mSalesOrderL.Reset();
+                            LastLineNo := 0;
+                            if eNode.SelectNodes('items/item', XmlNamaespaceManager, XmlNList2) then begin
+                                foreach Node2 in XmlNList2 do begin
+                                    eNode2 := Node2.AsXmlElement();
+                                    LastLineNo += 10000;
+                                    mSalesOrderL.Init();
+                                    mSalesOrderL."Magento Sales Order ID" := IncrOrderID;
+                                    mSalesOrderL."Line No." := LastLineNo;
+                                    MSalesOrderL."No." := GetText(eNode2, 'product_id');
+                                    MSalesOrderL.Description := GetText(eNode2, 'name');
+                                    MSalesOrderL."Quote Item ID" := GetText(eNode2, 'quote_item_id');
+                                    MSalesOrderL."Item ID" := GetText(eNode2, 'item_id');
+                                    MSalesOrderL.Quantity := GetDecimal(eNode2, 'qty_ordered');
+                                    MSalesOrderL."Cancelled Quantity" := GetDecimal(eNode2, 'qty_canceled');
+                                    MSalesOrderL."Refunded Quantity" := GetDecimal(eNode2, 'qty_refunded');
+                                    MSalesOrderL."Shipped Quantity" := GetDecimal(eNode2, 'qty_shipped');
+                                    MSalesOrderL."Line Discount %" := GetDecimal(eNode2, 'discount_percent');
+                                    MSalesOrderL."Line Discount Amount" := GetDecimal(eNode2, 'discount_amount');
+                                    MSalesOrderL."Tax %" := GetDecimal(eNode2, 'tax_percent');
+                                    MSalesOrderL."Tax Amount" := GetDecimal(eNode2, 'tax_amount');
+                                    MSalesOrderL."Row Invoiced" := GetDecimal(eNode2, 'row_invoiced');
+                                    MSalesOrderL."Row Total" := GetDecimal(eNode2, 'row_total');
+                                    mSalesOrderL.Insert();
+
+                                end;
+                            end;
                         end;
+
+                        InsertWebTxnLog('Web Order Single Received', 2, 1, '', '', GetText(eNode, 'increment_id'), SessionInfo."Session ID", '', '', '');
+                        TotalCount += 1;
+                        Message('Order Generated Successfully');
+                        Commit();
                     end;
                 end;
 

@@ -178,6 +178,16 @@ table 70005 "Magento Sales Header"
         {
             DataClassification = ToBeClassified;
         }
+
+        field(37; "Shipping Mehtod"; Code[20])
+        {
+            DataClassification = ToBeClassified;
+        }
+
+        field(38; "Order State"; Code[20])
+        {
+            DataClassification = ToBeClassified;
+        }
     }
 
     keys

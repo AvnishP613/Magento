@@ -1,6 +1,7 @@
 table 70001 "Magento Session Log"
 {
     DataClassification = ToBeClassified;
+    
 
     fields
     {

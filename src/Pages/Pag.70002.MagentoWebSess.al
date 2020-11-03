@@ -4,6 +4,9 @@ page 70002 "Magento Web Transaction"
     ApplicationArea = All;
     UsageCategory = Lists;
     SourceTable = "Magento Web Transaction Log";
+    DeleteAllowed = false;
+    InsertAllowed = false;
+    Editable = false;
 
 
 

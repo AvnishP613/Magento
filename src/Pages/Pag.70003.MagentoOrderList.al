@@ -4,6 +4,8 @@ page 70003 "Magento Order List"
     ApplicationArea = All;
     UsageCategory = Lists;
     SourceTable = "Magento Sales Order List";
+    DeleteAllowed = false;
+    InsertAllowed = false;
     layout
     {
         area(Content)

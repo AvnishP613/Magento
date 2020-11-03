@@ -74,7 +74,7 @@ page 70000 "Magento Setup"
 
                 }
 
-                action(WebSalesOrderID)
+                action(MagentoOrderList)
                 {
                     Caption = 'Magento Order List';
                     ApplicationArea = All;
@@ -93,7 +93,7 @@ page 70000 "Magento Setup"
                 Promoted = true;
                 PromotedIsBig = true;
                 PromotedOnly = true;
-                PromotedCategory = Category5;
+                PromotedCategory = Process;
 
                 Image = Item;
                 trigger OnAction();
@@ -114,7 +114,7 @@ page 70000 "Magento Setup"
                 Promoted = true;
                 PromotedIsBig = true;
                 PromotedOnly = true;
-                PromotedCategory = Category4;
+                PromotedCategory = Process;
 
                 Image = OrderList;
                 trigger OnAction();
@@ -133,6 +133,7 @@ page 70000 "Magento Setup"
                 Promoted = true;
                 PromotedIsBig = true;
                 PromotedOnly = true;
+                PromotedCategory = Category4;
 
                 Image = OrderList;
                 trigger OnAction();
@@ -140,6 +141,9 @@ page 70000 "Magento Setup"
                     Customer: Record Customer;
                     Item: Record Item;
                     WebOrder: Record "Magento Sales Order List";
+                    Mheader: Record "Magento Sales Header";
+                    mline: Record "Magento Sales Line";
+                    payinfo: Record "Magento Payment Info";
 
                 begin
                     WebOrder.DeleteAll();
@@ -147,6 +151,9 @@ page 70000 "Magento Setup"
                     Item.DeleteAll();
                     Customer.SetRange(Magento, true);
                     Customer.DeleteAll();
+                    Mheader.DeleteAll();
+                    mline.DeleteAll();
+                    payinfo.DeleteAll();//Demo Purpose
 
                 end;
             }

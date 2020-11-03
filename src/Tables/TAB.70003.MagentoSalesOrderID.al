@@ -131,6 +131,8 @@ table 70003 "Magento Sales Order List"
     end;
 
     trigger OnDelete()
+    var
+    
     begin
 
     end;

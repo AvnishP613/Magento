@@ -4,6 +4,9 @@ page 70001 "Magento Session Info"
     ApplicationArea = All;
     UsageCategory = Lists;
     SourceTable = "Magento Session Log";
+    DeleteAllowed = false;
+    InsertAllowed = false;
+    Editable=false;
 
 
 

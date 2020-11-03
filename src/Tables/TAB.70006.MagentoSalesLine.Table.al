@@ -124,7 +124,20 @@ table 70006 "Magento Sales Line"
         {
             DataClassification = ToBeClassified;
         }
+        field(19; "Quote Item ID"; Code[20])
+        {
+            DataClassification = ToBeClassified;
+        }
 
+        field(20; "Item ID"; Code[20])
+        {
+            DataClassification = ToBeClassified;
+        }
+
+         field(21; "Row Total"; Decimal)
+        {
+            DataClassification = ToBeClassified;
+        }
 
 
 
