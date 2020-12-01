@@ -23,9 +23,6 @@ Steps:
 5. Web Request Management
 
 
-Expected Time: 10 Hours
-
-Took Addtional Hours around 15 Hrs to compete
 
 Have Used Templates of Customer and Item to Create Customer and Item
 //Maintaining Seperate Tables for Magento Header and Line Info and Order List info
