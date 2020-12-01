@@ -23,6 +23,10 @@ Steps:
 5. Web Request Management
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 757763c6b3ab139fdccde3d4f754390018c96850
 Have Used Templates of Customer and Item to Create Customer and Item
 //Maintaining Seperate Tables for Magento Header and Line Info and Order List info
 
