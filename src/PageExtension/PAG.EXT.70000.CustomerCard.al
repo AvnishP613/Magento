@@ -22,6 +22,28 @@ pageextension 70000 CustomerCard extends "Customer Card"
             }
         }
     }
+    actions
+
+    {
+        addafter("Account Detail")
+        {
+            action(Base64Value)
+            {
+                ApplicationArea = All;
+                Promoted = true;
+                PromotedIsBig = true;
+                PromotedCategory = Process;
+                Image = Add;
+                trigger OnAction()
+                var
+                    B64: Codeunit ConvertToBase64;
+                begin
+                    B64.Convert64String();
+                end;
+            }
+        }
+
+    }
 
 
 }
